@@ -28,14 +28,28 @@ void Oscillator::updatePhaseIncrement()
 
 float Oscillator::getNextSample()
 {
-    float output = std::sin(phase) * amplitude;
+    float normalisedPhase = phase / (2.0f * float(M_PI));
+    float skew = 0.3f; // 0..1
 
+    float output;
+
+    if (normalisedPhase < skew)
+        output = normalisedPhase / skew;
+    else
+        output = 1.0f - (normalisedPhase - skew) / (1.0f - skew);
+
+    output = 2.0f * output - 1.0f; // scale to -1..1
+
+    // Apply amplitude
+    float finalOutput = output * amplitude;
+
+    // Advance phase
     phase += phaseIncrement;
 
     if (phase >= 2.0f * float(M_PI))
         phase -= 2.0f * float(M_PI);
 
-    return output;
+    return finalOutput;
 }
 
 void Oscillator::reset()

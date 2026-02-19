@@ -1,11 +1,17 @@
 #pragma once
 #include "dsp/Oscillator.h"
+#include "modulation/TripleLFO.h"
+#include "lowpass/lowpass.h"
+#include "crusher/crusher.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
 public:
     Oscillator testOsc;
+    TripleLFO tripleLFO;
+    LowPassFilter lowPassFilter;
+    crusher bitCrusher;
 
     //==============================================================================
     AudioPluginAudioProcessor();

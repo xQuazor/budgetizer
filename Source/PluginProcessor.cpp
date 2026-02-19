@@ -1,6 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-
+#include "dsp/Oscillator.h"
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
      : AudioProcessor (BusesProperties()
@@ -88,8 +88,25 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    juce::ignoreUnused (sampleRate, samplesPerBlock);
-    juce::dsp::Oscillator<float> testOsc;
+    juce::ignoreUnused (samplesPerBlock);
+
+    // Test Oscillator
+    testOsc.prepare(sampleRate);
+    testOsc.setFrequency(440.0f);
+    testOsc.setAmplitude(0.05f);
+    testOsc.reset();
+
+    // LFO
+    tripleLFO.prepare(sampleRate);
+    tripleLFO.setFrequencies(0.15f, 0.8f, 4.0f);
+    tripleLFO.setAmount(1.0f);
+
+    // Low pass filter
+    lowPassFilter.prepare(sampleRate);
+    lowPassFilter.setCutoff(400.0f);
+
+    bitCrusher.prepare(sampleRate);
+    bitCrusher.setReductionFactor(16); // moderate sample rate reduction
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -146,11 +163,37 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    for (int channel = 0; channel < totalNumOutputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
-        juce::ignoreUnused (channelData);
-        // ..do something to the data...
+
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            float lfoValue = tripleLFO.getNextSample(); // -1..1 evolving motion
+
+            // Convert LFO to 0..1 range for amplitude modulation
+            float amplitudeMod = 0.5f * (lfoValue + 1.0f); // now 0..1
+
+            float baseAmplitude = 0.5f;
+            float modDepth = 1.0f; // how strong the tremolo is (0..1)
+
+            float finalAmplitude = baseAmplitude * (1.0f - modDepth + amplitudeMod * modDepth);
+
+            // Debug: log amplitude occasionally (not every sample)
+            static int debugCounter = 0;
+            if (++debugCounter >= 4410) // roughly 10 times per second at 44.1kHz
+            {
+                DBG("Current Amplitude: " << finalAmplitude);
+                debugCounter = 0;
+            }
+
+            testOsc.setAmplitude(finalAmplitude);
+
+            float oscSample = testOsc.getNextSample();
+            float crushedSample = bitCrusher.processSample(oscSample);
+            float filteredSample = lowPassFilter.processSample(crushedSample);
+            channelData[sample] = filteredSample;
+        }
     }
 }
 
