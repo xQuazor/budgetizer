@@ -1,5 +1,4 @@
 #pragma once
-
 #include "PluginProcessor.h"
 
 //==============================================================================
@@ -13,10 +12,13 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
+
+
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     AudioPluginAudioProcessor& processorRef;
-
+    juce::Slider bitDepthKnob;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> bitDepthAttachment;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };

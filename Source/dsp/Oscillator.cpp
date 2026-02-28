@@ -23,7 +23,7 @@ void Oscillator::setAmplitude(float newAmplitude)
 
 void Oscillator::updatePhaseIncrement()
 {
-    phaseIncrement = 2.0f * float(M_PI) * frequency / float(sampleRate);
+    phaseIncrement = (2.0f * float(M_PI) * frequency) / float(sampleRate);
 }
 
 float Oscillator::getNextSample()

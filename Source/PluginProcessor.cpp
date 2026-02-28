@@ -10,12 +10,28 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
+apvts(*this, nullptr, "Parameters", createParameters())
 {
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout
+AudioPluginAudioProcessor::createParameters() {
+    std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+
+    params.push_back(std::make_unique<juce::AudioParameterInt>(
+        "bitDepth",
+        "Bit Depth",
+        1,
+        32,
+        16
+    ));
+
+    return { params.begin(), params.end() };
 }
 
 //==============================================================================
@@ -106,7 +122,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     lowPassFilter.setCutoff(400.0f);
 
     bitCrusher.prepare(sampleRate);
-    bitCrusher.setReductionFactor(16); // moderate sample rate reduction
+    bitCrusher.setReductionFactor(2); // moderate sample rate reduction
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -145,54 +161,45 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     juce::ignoreUnused (midiMessages);
 
     juce::ScopedNoDenormals noDenormals;
+
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
+    auto numSamples = buffer.getNumSamples();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+    int bitDepth = *apvts.getRawParameterValue("bitDepth");
+    bitCrusher.setReductionFactor(bitDepth);
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+    // Clear extra output channels
+    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+        buffer.clear(i, 0, numSamples);
+
+    for (int sample = 0; sample < numSamples; ++sample)
     {
-        auto* channelData = buffer.getWritePointer (channel);
+        // ---- LFO (advance once per sample frame)
+        float lfoValue = tripleLFO.getNextSample(); // -1..1
 
-        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+        // float amplitudeMod = 0.5f * (lfoValue + 1.0f); // 0..1
+        float baseAmplitude = 0.5f;
+        // float modDepth = 1.0f;
+
+        // float finalAmplitude =
+        //             baseAmplitude * (1.0f - modDepth + amplitudeMod * modDepth);
+
+        float finalAmplitude = baseAmplitude;
+
+        testOsc.setAmplitude(finalAmplitude);
+
+        // ---- Oscillator (advance once per sample frame)
+        float oscSample = testOsc.getNextSample();
+
+        // ---- FX chain (once per frame)
+        float crushedSample  = bitCrusher.processSample(oscSample);
+        float filteredSample = lowPassFilter.processSample(crushedSample);
+
+        // ---- Copy same sample to all channels
+        for (int channel = 0; channel < totalNumOutputChannels; ++channel)
         {
-            float lfoValue = tripleLFO.getNextSample(); // -1..1 evolving motion
-
-            // Convert LFO to 0..1 range for amplitude modulation
-            float amplitudeMod = 0.5f * (lfoValue + 1.0f); // now 0..1
-
-            float baseAmplitude = 0.5f;
-            float modDepth = 1.0f; // how strong the tremolo is (0..1)
-
-            float finalAmplitude = baseAmplitude * (1.0f - modDepth + amplitudeMod * modDepth);
-
-            // Debug: log amplitude occasionally (not every sample)
-            static int debugCounter = 0;
-            if (++debugCounter >= 4410) // roughly 10 times per second at 44.1kHz
-            {
-                DBG("Current Amplitude: " << finalAmplitude);
-                debugCounter = 0;
-            }
-
-            testOsc.setAmplitude(finalAmplitude);
-
-            float oscSample = testOsc.getNextSample();
-            float crushedSample = bitCrusher.processSample(oscSample);
-            float filteredSample = lowPassFilter.processSample(crushedSample);
-            channelData[sample] = filteredSample;
+            buffer.getWritePointer(channel)[sample] = filteredSample;
         }
     }
 }

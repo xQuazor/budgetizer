@@ -37,4 +37,5 @@ target_sources(MyPlugin PRIVATE
 target_link_libraries(MyPlugin PRIVATE
         juce::juce_audio_utils
         juce::juce_audio_devices
+        juce::juce_gui_basics
 )
