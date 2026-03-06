@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(
-        /Users/dovydas/CLionProjects/JUCE
+        /Users/dovis/Documents/JUCE
         ${CMAKE_BINARY_DIR}/JUCE
 )
 
@@ -22,16 +22,20 @@ juce_add_plugin(MyPlugin
         PLUGIN_CODE Plug
         FORMATS VST3 Standalone
         PRODUCT_NAME "MyPlugin"
-
 )
 
 target_sources(MyPlugin PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
         Source/dsp/Oscillator.cpp
-        Source/modulation/TripleLFO.cpp
+        Source/modulation/NoiseLFO.cpp
+        Source/modulation/TriangleLFO.cpp
+        Source/modulation/ComplexLFO.cpp
         Source/lowpass/lowpass.cpp
-        Source/crusher/crusher.cpp
+        Source/bitcrusher/BitCrusher.cpp
+        Source/chorus/Chorus.cpp
+        Source/pitch/PitchModulator.cpp
+        Source/player/AudioFilePlayer.cpp
 )
 
 target_link_libraries(MyPlugin PRIVATE

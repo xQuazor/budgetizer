@@ -1,32 +1,35 @@
 #include "lowpass.h"
 
-void LowPassFilter::prepare(double newSampleRate)
+void LowPassFilter::setSampleRate(double newSampleRate)
 {
     sampleRate = newSampleRate;
     updateCoefficient();
-    reset();
 }
 
-void LowPassFilter::setCutoff(float newCutoffHz)
+void LowPassFilter::setCutoff(float newCutoff)
 {
-    cutoff = newCutoffHz;
+    cutoff = newCutoff;
     updateCoefficient();
+}
+
+void LowPassFilter::setQ(float newQ)
+{
+    q = (newQ > 0.0f) ? newQ : 0.1f;
 }
 
 void LowPassFilter::reset()
 {
-    z1 = 0.0f;
+    previousSample = 0.0f;
 }
 
 void LowPassFilter::updateCoefficient()
 {
-    // One-pole lowpass coefficient
     float x = std::exp(-2.0f * float(M_PI) * cutoff / float(sampleRate));
     a = 1.0f - x;
 }
 
-float LowPassFilter::processSample(float input)
+float LowPassFilter::processSample(float signal)
 {
-    z1 = a * input + (1.0f - a) * z1;
-    return z1;
+    previousSample = a * signal + (1.0f - a) * previousSample;
+    return previousSample;
 }

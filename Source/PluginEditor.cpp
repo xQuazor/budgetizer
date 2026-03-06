@@ -4,65 +4,85 @@
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
-
 {
-    juce::ignoreUnused (processorRef);
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    auto setupKnob = [this] (juce::Slider& knob)
+    {
+        knob.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+        knob.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 70, 20);
+        addAndMakeVisible (knob);
+    };
 
-    bitDepthKnob.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    bitDepthKnob.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    auto setupLabel = [this] (juce::Label& label, const juce::String& text)
+    {
+        label.setText (text, juce::dontSendNotification);
+        label.setJustificationType (juce::Justification::centred);
+        label.setFont (juce::Font (13.0f));
+        addAndMakeVisible (label);
+    };
 
-    addAndMakeVisible(bitDepthKnob);
+    setupKnob (bitDepthKnob);
+    setupKnob (reductionFactorKnob);
+    setupKnob (cutoffKnob);
 
-    bitDepthAttachment = std::make_unique<
-        juce::AudioProcessorValueTreeState::SliderAttachment>(
-            processorRef.apvts,
-            "bitDepth",
-            bitDepthKnob
-    );
+    setupLabel (bitDepthLabel,        "Bit Depth");
+    setupLabel (reductionFactorLabel, "Sample Rate Red.");
+    setupLabel (cutoffLabel,          "Cutoff");
 
+    bitDepthAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (
+        processorRef.apvts, "bitDepth", bitDepthKnob);
+
+    reductionFactorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (
+        processorRef.apvts, "reductionFactor", reductionFactorKnob);
+
+    cutoffAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (
+        processorRef.apvts, "cutoff", cutoffKnob);
+
+    ditheringAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
+        processorRef.apvts, "dithering", ditheringButton);
+    addAndMakeVisible (ditheringButton);
+
+    linearInterpAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
+        processorRef.apvts, "linearInterp", linearInterpButton);
+    addAndMakeVisible (linearInterpButton);
+
+    polyBlepAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
+        processorRef.apvts, "polyBlep", polyBlepButton);
+    addAndMakeVisible (polyBlepButton);
+
+    setSize (480, 240);
 }
 
-AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
-{
-}
+AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor() {}
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    g.setColour (juce::Colours::white);
-    g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
 }
 
 void AudioPluginAudioProcessorEditor::resized()
 {
+    auto area      = getLocalBounds().reduced (10);
+    const int labelH  = 20;
+    const int buttonH = 30;
+    const int colW    = area.getWidth() / 3;
 
-    juce::Grid grid;
+    // Bottom strip: three toggles side by side
+    auto bottomStrip = area.removeFromBottom (buttonH);
+    const int btnW = bottomStrip.getWidth() / 3;
+    ditheringButton   .setBounds (bottomStrip.removeFromLeft (btnW).reduced (4, 0));
+    linearInterpButton.setBounds (bottomStrip.removeFromLeft (btnW).reduced (4, 0));
+    polyBlepButton    .setBounds (bottomStrip.reduced (4, 0));
 
-    using Track = juce::Grid::TrackInfo;
-
-    grid.templateColumns = {
-        juce::Grid::TrackInfo(juce::Grid::Fr(1)),
-        juce::Grid::TrackInfo(juce::Grid::Fr(1)) };
-    grid.templateRows    = {
-        juce::Grid::TrackInfo(juce::Grid::Fr(1)),
-        juce::Grid::TrackInfo(juce::Grid::Fr(1))
+    // Top rows: three knobs
+    auto placeKnob = [&] (juce::Label& label, juce::Slider& knob)
+    {
+        auto col = area.removeFromLeft (colW);
+        label.setBounds (col.removeFromTop (labelH));
+        knob.setBounds  (col);
     };
 
-    grid.items = {
-        juce::GridItem(bitDepthKnob),
-        juce::GridItem(bitDepthKnob),
-        juce::GridItem(bitDepthKnob),
-        juce::GridItem(bitDepthKnob)
-    };
-
-    grid.performLayout(getLocalBounds());
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    placeKnob (bitDepthLabel,        bitDepthKnob);
+    placeKnob (reductionFactorLabel, reductionFactorKnob);
+    placeKnob (cutoffLabel,          cutoffKnob);
 }
