@@ -8,6 +8,8 @@ public:
     void prepare(double newSampleRate, int numChannels);
     void setDelayTimeA(float newDelayTime);
     void setDelayTimeB(float newDelayTime);
+    void setFeedback(float amount);         // 0 = no feedback, 1 = full feedback
+    void setDelayMultiplier(float factor);  // scales baseDelayA/B by 1.0 – 4.0
     void applyTriangleLFO(float lfoValue);
     float processSample(float input, int channel);
 
@@ -33,8 +35,10 @@ private:
     int writePosA = 0;
     int writePosB = 0;
 
-    double sampleRate = 44100.0;
-    float mix = 0.5f;
+    double sampleRate    = 44100.0;
+    float  mix           = 0.5f;
+    float  feedback      = 0.0f;
+    float  delayMult     = 1.0f;
 
     static constexpr int maxDelaySamples = 8192;
 };

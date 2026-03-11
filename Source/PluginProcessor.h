@@ -55,7 +55,8 @@ private:
     ComplexLFO  complexLFO;
 
     // Signal chain: LowPassFilter → BitCrusher → Chorus → PitchModulator
-    LowPassFilter  lowPassFilter;
+    LowPassFilter  lowPassFilterL;
+    LowPassFilter  lowPassFilterR;
     BitCrusher     bitCrusher;
     Chorus         chorus;
     PitchModulator pitchModulatorL;
@@ -70,6 +71,9 @@ private:
 
     // Base sample-rate-reduction depth before ComplexLFO modulation
     static constexpr int baseReduction = 4;
+
+    double sessionSampleRate = 44100.0;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

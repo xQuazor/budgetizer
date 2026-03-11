@@ -28,6 +28,9 @@ void Chorus::setDelayTimeB(float newDelayTime)
     baseDelayB = newDelayTime;
 }
 
+void Chorus::setFeedback(float amount)        { feedback   = juce::jlimit (0.0f, 0.99f, amount); }
+void Chorus::setDelayMultiplier(float factor) { delayMult  = juce::jlimit (1.0f, 4.0f,  factor); }
+
 void Chorus::applyTriangleLFO(float lfoValue)
 {
     constexpr float triangleModDepth = 0.005f; // ±5 ms
@@ -40,10 +43,8 @@ float Chorus::processSample(float input, int channel)
     if (channel == 0)
     {
         float lfo          = std::sin(phaseA) * depthA;
-        float delaySamples = (baseDelayA + lfo) * float(sampleRate);
+        float delaySamples = (baseDelayA * delayMult + lfo) * float(sampleRate);
         delaySamples = std::max(1.0f, std::min(delaySamples, float(maxDelaySamples - 2)));
-
-        delayBufferA.setSample(0, writePosA, input);
 
         float readPos = float(writePosA) - delaySamples;
         while (readPos < 0.0f) readPos += float(maxDelaySamples);
@@ -54,6 +55,9 @@ float Chorus::processSample(float input, int channel)
         float wet  = (1.0f - frac) * delayBufferA.getSample(0, r0)
                    + frac          * delayBufferA.getSample(0, r1);
 
+        // Write input + feedback into the delay buffer
+        delayBufferA.setSample(0, writePosA, input + feedback * wet);
+
         writePosA = (writePosA + 1) % maxDelaySamples;
         phaseA   += 2.0f * float(M_PI) * rateA / float(sampleRate);
         if (phaseA >= 2.0f * float(M_PI)) phaseA -= 2.0f * float(M_PI);
@@ -63,10 +67,8 @@ float Chorus::processSample(float input, int channel)
     else
     {
         float lfo          = std::sin(phaseB) * depthB;
-        float delaySamples = (baseDelayB + lfo) * float(sampleRate);
+        float delaySamples = (baseDelayB * delayMult + lfo) * float(sampleRate);
         delaySamples = std::max(1.0f, std::min(delaySamples, float(maxDelaySamples - 2)));
-
-        delayBufferB.setSample(0, writePosB, input);
 
         float readPos = float(writePosB) - delaySamples;
         while (readPos < 0.0f) readPos += float(maxDelaySamples);
@@ -76,6 +78,9 @@ float Chorus::processSample(float input, int channel)
         float frac = readPos - std::floor(readPos);
         float wet  = (1.0f - frac) * delayBufferB.getSample(0, r0)
                    + frac          * delayBufferB.getSample(0, r1);
+
+        // Write input + feedback into the delay buffer
+        delayBufferB.setSample(0, writePosB, input + feedback * wet);
 
         writePosB = (writePosB + 1) % maxDelaySamples;
         phaseB   += 2.0f * float(M_PI) * rateB / float(sampleRate);

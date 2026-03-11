@@ -26,12 +26,18 @@ AudioPluginAudioProcessor::createParameters()
         "reductionFactor", "Sample Rate Reduction", 1, 32, 4));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "cutoff", "Cutoff", 0.0f, 20000.0f, 5000.0f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "dryWet", "Dry/Wet", 0.0f, 1.0f, 0.5f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "masterDryWet", "Master Dry/Wet", 0.0f, 1.0f, 1.0f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "chorusFeedback", "Chorus Feedback", 0.0f, 1.0f, 0.0f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "chorusDelayMult", "Chorus Delay Mult", 1.0f, 4.0f, 1.0f));
     params.push_back (std::make_unique<juce::AudioParameterBool> (
         "dithering", "Dithering", false));
     params.push_back (std::make_unique<juce::AudioParameterBool> (
-        "linearInterp", "Linear Interpolation", true));
-    params.push_back (std::make_unique<juce::AudioParameterBool> (
-        "polyBlep", "PolyBLEP", false));
+        "interpolated", "Interpolated", false));
     return { params.begin(), params.end() };
 }
 
@@ -80,6 +86,8 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     // oscillator.setAmplitude (0.3f);
     // oscillator.reset();
 
+    sessionSampleRate = sampleRate;
+
     // Audio file player — set the directory path below
     audioFilePlayer.prepare (sampleRate);
     audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovis/CLionProjects/degrainator/music"));
@@ -97,14 +105,20 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     complexLFO.setRateFast   (baseFastRate);
 
     // Signal chain
-    lowPassFilter.setSampleRate (sampleRate);
-    lowPassFilter.setCutoff (4000.0f);
-    lowPassFilter.setQ (0.707f);
-    lowPassFilter.reset();
+    lowPassFilterL.setSampleRate (sampleRate);
+    lowPassFilterL.setCutoff (4000.0f);
+    lowPassFilterL.setQ (0.707f);
+    lowPassFilterL.reset();
 
-    bitCrusher.setSampleRate (sampleRate);
+    lowPassFilterR.setSampleRate (sampleRate);
+    lowPassFilterR.setCutoff (4000.0f);
+    lowPassFilterR.setQ (0.707f);
+    lowPassFilterR.reset();
+
+    bitCrusher.prepare (sampleRate);
     bitCrusher.setReductionFactor (baseReduction);
     bitCrusher.setBitRate (8);
+    bitCrusher.setFeedback(0.25f);
     bitCrusher.reset();
 
     chorus.prepare (sampleRate, 2);
@@ -148,52 +162,71 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const int numSamples             = buffer.getNumSamples();
 
     // Read UI parameters once per block
-    bitCrusher.setBitRate   (static_cast<int>  (*apvts.getRawParameterValue ("bitDepth")));
-    bitCrusher.setDithering            (*apvts.getRawParameterValue ("dithering")    >= 0.5f);
-    bitCrusher.setLinearInterpolation  (*apvts.getRawParameterValue ("linearInterp") >= 0.5f);
-    bitCrusher.setPolyBlep             (*apvts.getRawParameterValue ("polyBlep")     >= 0.5f);
-    const int   uiReduction = static_cast<int> (*apvts.getRawParameterValue ("reductionFactor"));
-    const float uiCutoff    = *apvts.getRawParameterValue ("cutoff");
+    bitCrusher.setBitRate              (static_cast<int> (*apvts.getRawParameterValue ("bitDepth")));
+    bitCrusher.setDithering    (*apvts.getRawParameterValue ("dithering")    >= 0.5f);
+    bitCrusher.setInterpolated (*apvts.getRawParameterValue ("interpolated") >= 0.5f);
+    chorus.setFeedback        (*apvts.getRawParameterValue ("chorusFeedback"));
+    chorus.setDelayMultiplier (*apvts.getRawParameterValue ("chorusDelayMult"));
+    const int   uiReduction    = static_cast<int> (*apvts.getRawParameterValue ("reductionFactor"));
+    const float uiCutoff       = *apvts.getRawParameterValue ("cutoff");
+    const float dryWet         = *apvts.getRawParameterValue ("dryWet");
+    const float masterDryWet   = *apvts.getRawParameterValue ("masterDryWet");
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
         // ── 1. NoiseLFO → modulate TriangleLFO and ComplexLFO rates ──────────
         const float noiseVal = noiseLFO.returnModulation();
 
-        triangleLFO.setRate (baseTriangleRate * (1.0f + 0.5f * noiseVal));
-        complexLFO.setRateSlow   (baseSlowRate  * (1.0f + 0.5f * noiseVal));
-        complexLFO.setRateMedium (baseMedRate   * (1.0f + 0.5f * noiseVal));
-        complexLFO.setRateFast   (baseFastRate  * (1.0f + 0.5f * noiseVal));
-        // lowPassFilter.setCutoff (uiCutoff + (1000.0f * noiseVal));
-        lowPassFilter.setCutoff (uiCutoff);
+        triangleLFO.setRate      (baseTriangleRate * (1.0f + 0.5f * noiseVal));
+        complexLFO.setRateSlow   (baseSlowRate     * (1.0f + 0.5f * noiseVal));
+        complexLFO.setRateMedium (baseMedRate      * (1.0f + 0.5f * noiseVal));
+        complexLFO.setRateFast   (baseFastRate     * (1.0f + 0.5f * noiseVal));
+        lowPassFilterL.setCutoff (uiCutoff);
+        lowPassFilterR.setCutoff (uiCutoff);
 
         const float triangleVal = triangleLFO.returnModulation();
         const float complexVal  = complexLFO.returnModulation();
 
         // ── 2. Apply modulation to effect targets ─────────────────────────────
-        chorus.applyTriangleLFO (triangleVal);                              // → baseDelayA/B
+        chorus.applyTriangleLFO (triangleVal);                                  // → baseDelayA/B
 
         const int modulatedReduction = juce::jlimit (1, 32, uiReduction + int (complexVal * 1.0f));
-        bitCrusher.setReductionFactor (modulatedReduction);                 // → reductionFactor
+        bitCrusher.setReductionFactor (modulatedReduction);                     // → reductionFactor
 
-        pitchModulatorL.applyComplexLFO (complexVal);                       // → depth
+        pitchModulatorL.applyComplexLFO (complexVal);                           // → depth
         pitchModulatorR.applyComplexLFO (complexVal);
 
-        // ── 3. Signal chain: AudioFilePlayer → LPF → BitCrusher ─────────────
+        // ── 3. Stereo signal chain ────────────────────────────────────────────
         // const float oscSample = oscillator.getNextSample();
-        const float oscSample = audioFilePlayer.getNextSample();
-        const float filtered  = lowPassFilter.processSample (oscSample);
-        const float crushed   = bitCrusher.processSample (filtered);
+        float oscL, oscR;
+        audioFilePlayer.getNextStereoSample (oscL, oscR);
 
-        // ── 4. Per-channel: Chorus → PitchModulator → output ─────────────────
-        const float outL = pitchModulatorL.processSample (chorus.processSample (crushed, 0));
+        // LowPassFilter — independent state per channel
+        const float filteredL = lowPassFilterL.processSample (oscL);
+        const float filteredR = lowPassFilterR.processSample (oscR);
+
+        // BitCrusher — per-channel S&H, error-feedback chorus, AA filter
+        const float crushedL  = bitCrusher.processSample (filteredL, 0);
+        const float crushedR  = bitCrusher.processSample (filteredR, 1);
+
+        // Chorus — channel A (left) / channel B (right)
+        const float chorusedL = chorus.processSample (crushedL, 0);
+        const float chorusedR = chorus.processSample (crushedR, 1);
+
+        // ── 4. Parallel sum: crushed (dry) + chorused (wet) ──────────────────
+        const float preL = crushedL * (1.0f - dryWet) + chorusedL * dryWet;
+        const float preR = crushedR * (1.0f - dryWet) + chorusedR * dryWet;
+
+        // ── 5. PitchModulator → output ────────────────────────────────────────
+        const float outL = pitchModulatorL.processSample (preL);
         const float outR = (totalNumOutputChannels > 1)
-                         ? pitchModulatorR.processSample (chorus.processSample (crushed, 1))
+                         ? pitchModulatorR.processSample (preR)
                          : outL;
 
-        buffer.getWritePointer (0)[sample] = outL;
+        // ── 6. Master dry/wet: blend unprocessed source with full chain ────────
+        buffer.getWritePointer (0)[sample] = oscL * (1.0f - masterDryWet) + outL * masterDryWet;
         if (totalNumOutputChannels > 1)
-            buffer.getWritePointer (1)[sample] = outR;
+            buffer.getWritePointer (1)[sample] = oscR * (1.0f - masterDryWet) + outR * masterDryWet;
     }
 
     // Clear any extra output channels beyond stereo
