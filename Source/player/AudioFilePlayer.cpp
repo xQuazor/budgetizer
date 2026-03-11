@@ -47,10 +47,13 @@ bool AudioFilePlayer::loadFromDirectory (const juce::File& directory)
     return false;
 }
 
-float AudioFilePlayer::getNextSample()
+void AudioFilePlayer::getNextStereoSample (float& left, float& right)
 {
     if (! loaded || fileBuffer.getNumSamples() == 0)
-        return 0.0f;
+    {
+        left = right = 0.0f;
+        return;
+    }
 
     const int numSamples  = fileBuffer.getNumSamples();
     const int numChannels = fileBuffer.getNumChannels();
@@ -60,19 +63,19 @@ float AudioFilePlayer::getNextSample()
     const int   pos1 = (pos0 + 1) % numSamples;
     const float frac = float (fractionalPos - std::floor (fractionalPos));
 
-    // Average all channels → mono
-    float sample = 0.0f;
-    for (int ch = 0; ch < numChannels; ++ch)
-        sample += (1.0f - frac) * fileBuffer.getSample (ch, pos0)
-                + frac          * fileBuffer.getSample (ch, pos1);
-    sample /= float (numChannels);
+    auto interp = [&] (int ch) -> float
+    {
+        return (1.0f - frac) * fileBuffer.getSample (ch, pos0)
+             + frac          * fileBuffer.getSample (ch, pos1);
+    };
 
-    // Advance position at the file's sample rate relative to the plugin rate
+    left  = interp (0);
+    right = (numChannels > 1) ? interp (1) : left;  // mono → mirror to right
+
+    // Advance position once per stereo pair
     fractionalPos += fileSampleRate / pluginSampleRate;
     if (fractionalPos >= numSamples)
         fractionalPos -= numSamples; // loop
-
-    return sample;
 }
 
 void AudioFilePlayer::reset()

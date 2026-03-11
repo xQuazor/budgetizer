@@ -14,9 +14,10 @@ public:
     /** Finds and loads the first supported audio file inside a directory. */
     bool loadFromDirectory (const juce::File& directory);
 
-    /** Returns the next mono sample and advances the read position.
-        Loops back to the start when the file ends. Returns 0 if no file is loaded. */
-    float getNextSample();
+    /** Fills left and right with the next stereo sample and advances the read position.
+        Mono files are mirrored to both channels. Loops when the file ends.
+        Outputs 0 if no file is loaded. */
+    void getNextStereoSample (float& left, float& right);
 
     void reset();
     bool isLoaded() const { return loaded; }
