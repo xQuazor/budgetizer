@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(
-        /Users/dovis/Documents/JUCE
+        /Users/dovydas/CLionProjects/JUCE
         ${CMAKE_BINARY_DIR}/JUCE
 )
 
@@ -27,19 +27,30 @@ juce_add_plugin(MyPlugin
 target_sources(MyPlugin PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
+        Source/ParameterBridge.cpp
         Source/dsp/Oscillator.cpp
         Source/modulation/NoiseLFO.cpp
         Source/modulation/TriangleLFO.cpp
         Source/modulation/ComplexLFO.cpp
         Source/lowpass/lowpass.cpp
         Source/bitcrusher/BitCrusher.cpp
-        Source/chorus/Chorus.cpp
+        Source/chorus/chorus.cpp
         Source/pitch/PitchModulator.cpp
         Source/player/AudioFilePlayer.cpp
 )
+
+# --- React UI BinaryData (built from ui/dist/) ---
+# Run: cd ui && npm run build  (before building the C++ project in release)
+file(GLOB_RECURSE UI_DIST_FILES "${CMAKE_SOURCE_DIR}/ui/dist/*")
+
+if(UI_DIST_FILES)
+    juce_add_binary_data(PluginUIData SOURCES ${UI_DIST_FILES})
+    target_link_libraries(MyPlugin PRIVATE PluginUIData)
+endif()
 
 target_link_libraries(MyPlugin PRIVATE
         juce::juce_audio_utils
         juce::juce_audio_devices
         juce::juce_gui_basics
+        juce::juce_gui_extra
 )
