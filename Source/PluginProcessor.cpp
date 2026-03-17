@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include <cmath>
 
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
@@ -20,24 +21,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 AudioPluginAudioProcessor::createParameters()
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
-    params.push_back (std::make_unique<juce::AudioParameterInt> (
-        "bitDepth", "Bit Depth", 1, 16, 8));
-    params.push_back (std::make_unique<juce::AudioParameterInt> (
-        "reductionFactor", "Sample Rate Reduction", 1, 32, 4));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "cutoff", "Cutoff", 0.0f, 20000.0f, 5000.0f));
+        "tuneSpeed",    "Tune Speed",    50.0f,  2000.0f, 1000.0f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "dryWet", "Dry/Wet", 0.0f, 1.0f, 0.5f));
+        "staticAmount", "Static Amount", 0.0f,   1.0f,    0.0f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "masterDryWet", "Master Dry/Wet", 0.0f, 1.0f, 1.0f));
+        "drift",        "Drift",         0.0f,   1.0f,    0.08f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "chorusFeedback", "Chorus Feedback", 0.0f, 1.0f, 0.0f));
+        "burstDensity", "Burst Density", 0.0f,   1.0f,    0.25f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "chorusDelayMult", "Chorus Delay Mult", 1.0f, 4.0f, 1.0f));
-    params.push_back (std::make_unique<juce::AudioParameterBool> (
-        "dithering", "Dithering", false));
-    params.push_back (std::make_unique<juce::AudioParameterBool> (
-        "interpolated", "Interpolated", false));
+        "bandwidth",    "Bandwidth",     2000.0f, 5000.0f, 3500.0f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "masterMix",    "Master Mix",    0.0f,    1.0f,    1.0f));
     return { params.begin(), params.end() };
 }
 
@@ -80,56 +75,20 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 {
     juce::ignoreUnused (samplesPerBlock);
 
-    // Source oscillator (kept for reference)
-    // oscillator.prepare (sampleRate);
-    // oscillator.setFrequency (440.0f);
-    // oscillator.setAmplitude (0.3f);
-    // oscillator.reset();
-
-    sessionSampleRate = sampleRate;
-
-    // Audio file player — set the directory path below
     audioFilePlayer.prepare (sampleRate);
     audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovis/CLionProjects/degrainator/music"));
 
-    // LFO hierarchy
-    noiseLFO.setSampleRate (sampleRate);
-    noiseLFO.setRate (0.5f);
-
-    triangleLFO.setSampleRate (sampleRate);
-    triangleLFO.setRate (baseTriangleRate);
-
-    complexLFO.setSampleRate (sampleRate);
-    complexLFO.setRateSlow   (baseSlowRate);
-    complexLFO.setRateMedium (baseMedRate);
-    complexLFO.setRateFast   (baseFastRate);
-
-    // Signal chain
-    lowPassFilterL.setSampleRate (sampleRate);
-    lowPassFilterL.setCutoff (4000.0f);
-    lowPassFilterL.setQ (0.707f);
-    lowPassFilterL.reset();
-
-    lowPassFilterR.setSampleRate (sampleRate);
-    lowPassFilterR.setCutoff (4000.0f);
-    lowPassFilterR.setQ (0.707f);
-    lowPassFilterR.reset();
-
     bitCrusher.prepare (sampleRate);
-    bitCrusher.setReductionFactor (baseReduction);
+    bitCrusher.setReductionFactor (8);
     bitCrusher.setBitRate (8);
-    bitCrusher.setFeedback(0.25f);
-    bitCrusher.reset();
+    bitCrusher.setFeedback (0.0f);
 
-    chorus.prepare (sampleRate, 2);
-    chorus.setDelayTimeA (0.015f);
-    chorus.setDelayTimeB (0.020f);
-
-    pitchModulatorL.prepare (sampleRate);
-    pitchModulatorL.setDelayTime (0.01f);
-
-    pitchModulatorR.prepare (sampleRate);
-    pitchModulatorR.setDelayTime (0.01f);
+    noiseGen.prepare    (sampleRate);
+    tuner.prepare       (sampleRate);
+    drift.prepare       (sampleRate);
+    sweepFilter.prepare (sampleRate);
+    burstGen.prepare    (sampleRate);
+    bandLimiter.prepare (sampleRate);
 }
 
 void AudioPluginAudioProcessor::releaseResources() {}
@@ -161,75 +120,61 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const int totalNumOutputChannels = getTotalNumOutputChannels();
     const int numSamples             = buffer.getNumSamples();
 
-    // Read UI parameters once per block
-    bitCrusher.setBitRate              (static_cast<int> (*apvts.getRawParameterValue ("bitDepth")));
-    bitCrusher.setDithering    (*apvts.getRawParameterValue ("dithering")    >= 0.5f);
-    bitCrusher.setInterpolated (*apvts.getRawParameterValue ("interpolated") >= 0.5f);
-    chorus.setFeedback        (*apvts.getRawParameterValue ("chorusFeedback"));
-    chorus.setDelayMultiplier (*apvts.getRawParameterValue ("chorusDelayMult"));
-    const int   uiReduction    = static_cast<int> (*apvts.getRawParameterValue ("reductionFactor"));
-    const float uiCutoff       = *apvts.getRawParameterValue ("cutoff");
-    const float dryWet         = *apvts.getRawParameterValue ("dryWet");
-    const float masterDryWet   = *apvts.getRawParameterValue ("masterDryWet");
+    // Read parameters once per block
+    const float tuneSpeed    = *apvts.getRawParameterValue ("tuneSpeed");
+    const float staticAmount = *apvts.getRawParameterValue ("staticAmount");
+    const float driftAmount  = *apvts.getRawParameterValue ("drift");
+    const float burstDensity = *apvts.getRawParameterValue ("burstDensity");
+    const float bandwidth    = *apvts.getRawParameterValue ("bandwidth");
+    const float masterMix    = *apvts.getRawParameterValue ("masterMix");
+
+    tuner.setSweepTime (tuneSpeed);
+    noiseGen.setLevel  (staticAmount * 0.4f);
+    drift.setAmount    (driftAmount);
+    burstGen.setDensity (burstDensity);
+
+    // bandwidth 2000..5000 Hz → Q 8..3
+    const float q = juce::jmap (bandwidth, 2000.0f, 5000.0f, 8.0f, 3.0f);
+    sweepFilter.setQ (q);
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        // ── 1. NoiseLFO → modulate TriangleLFO and ComplexLFO rates ──────────
-        const float noiseVal = noiseLFO.returnModulation();
+        // ── Advance modulation ──────────────────────────────────────────────
+        tuner.advance();
+        const float noise = noiseGen.process();
 
-        triangleLFO.setRate      (baseTriangleRate * (1.0f + 0.5f * noiseVal));
-        complexLFO.setRateSlow   (baseSlowRate     * (1.0f + 0.5f * noiseVal));
-        complexLFO.setRateMedium (baseMedRate      * (1.0f + 0.5f * noiseVal));
-        complexLFO.setRateFast   (baseFastRate     * (1.0f + 0.5f * noiseVal));
-        lowPassFilterL.setCutoff (uiCutoff);
-        lowPassFilterR.setCutoff (uiCutoff);
+        float freq = tuner.getCurrentFrequency() + drift.process() + noise;
+        freq = juce::jlimit (200.0f, 6000.0f, freq);
 
-        const float triangleVal = triangleLFO.returnModulation();
-        const float complexVal  = complexLFO.returnModulation();
+        sweepFilter.setFrequency (freq);
+        burstGen.setCurrentFrequency (freq);
 
-        // ── 2. Apply modulation to effect targets ─────────────────────────────
-        chorus.applyTriangleLFO (triangleVal);                                  // → baseDelayA/B
 
-        const int modulatedReduction = juce::jlimit (1, 32, uiReduction + int (complexVal * 1.0f));
-        bitCrusher.setReductionFactor (modulatedReduction);                     // → reductionFactor
+        // ── Stereo signal chain ─────────────────────────────────────────────
+        float srcL, srcR;
+        audioFilePlayer.getNextStereoSample (srcL, srcR);
 
-        pitchModulatorL.applyComplexLFO (complexVal);                           // → depth
-        pitchModulatorR.applyComplexLFO (complexVal);
+        for (int ch = 0; ch < std::min (totalNumOutputChannels, 2); ++ch)
+        {
+            const float src = (ch == 0) ? srcL : srcR;
 
-        // ── 3. Stereo signal chain ────────────────────────────────────────────
-        // const float oscSample = oscillator.getNextSample();
-        float oscL, oscR;
-        audioFilePlayer.getNextStereoSample (oscL, oscR);
+            // 1. BitCrusher — sample-rate and bit-depth reduction
+            float sig = bitCrusher.processSample (src, ch);
 
-        // LowPassFilter — independent state per channel
-        const float filteredL = lowPassFilterL.processSample (oscL);
-        const float filteredR = lowPassFilterR.processSample (oscR);
+            // 2. Station burst (gate the crushed signal + noise through an envelope)
+            sig = burstGen.process (sig  );
 
-        // BitCrusher — per-channel S&H, error-feedback chorus, AA filter
-        const float crushedL  = bitCrusher.processSample (filteredL, 0);
-        const float crushedR  = bitCrusher.processSample (filteredR, 1);
+            // 3. AM distortion (tanh soft saturation, drive = 2)
+            sig = std::tanh (sig * 2.0f);
 
-        // Chorus — channel A (left) / channel B (right)
-        const float chorusedL = chorus.processSample (crushedL, 0);
-        const float chorusedR = chorus.processSample (crushedR, 1);
+            // 4. Band limit (200 Hz – 5 kHz)
+            sig = bandLimiter.processSample (sig, ch);
 
-        // ── 4. Parallel sum: crushed (dry) + chorused (wet) ──────────────────
-        const float preL = crushedL * (1.0f - dryWet) + chorusedL * dryWet;
-        const float preR = crushedR * (1.0f - dryWet) + chorusedR * dryWet;
-
-        // ── 5. PitchModulator → output ────────────────────────────────────────
-        const float outL = pitchModulatorL.processSample (preL);
-        const float outR = (totalNumOutputChannels > 1)
-                         ? pitchModulatorR.processSample (preR)
-                         : outL;
-
-        // ── 6. Master dry/wet: blend unprocessed source with full chain ────────
-        buffer.getWritePointer (0)[sample] = oscL * (1.0f - masterDryWet) + outL * masterDryWet;
-        if (totalNumOutputChannels > 1)
-            buffer.getWritePointer (1)[sample] = oscR * (1.0f - masterDryWet) + outR * masterDryWet;
+            // 5. Master mix: blend dry source with fully processed signal
+            buffer.getWritePointer (ch)[sample] = src * (1.0f - masterMix) + sig * masterMix;
+        }
     }
 
-    // Clear any extra output channels beyond stereo
     for (int ch = 2; ch < totalNumOutputChannels; ++ch)
         buffer.clear (ch, 0, numSamples);
 }

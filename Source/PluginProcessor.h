@@ -1,13 +1,12 @@
 #pragma once
-#include "dsp/Oscillator.h"
 #include "player/AudioFilePlayer.h"
-#include "modulation/NoiseLFO.h"
-#include "modulation/TriangleLFO.h"
-#include "modulation/ComplexLFO.h"
-#include "lowpass/lowpass.h"
 #include "bitcrusher/BitCrusher.h"
-#include "chorus/Chorus.h"
-#include "pitch/PitchModulator.h"
+#include "radio/NoiseGenerator.h"
+#include "radio/RadioTuner.h"
+#include "radio/MechanicalDrift.h"
+#include "radio/SweepFilter.h"
+#include "radio/StationBurstGenerator.h"
+#include "radio/BandLimiter.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 
 //==============================================================================
@@ -45,35 +44,16 @@ public:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
 
 private:
-    // Source
-    Oscillator      oscillator;     // kept for reference; commented out in processBlock
-    AudioFilePlayer audioFilePlayer;
+    AudioFilePlayer        audioFilePlayer;
 
-    // LFO hierarchy: NoiseLFO → TriangleLFO / ComplexLFO → effect targets
-    NoiseLFO    noiseLFO;
-    TriangleLFO triangleLFO;
-    ComplexLFO  complexLFO;
-
-    // Signal chain: LowPassFilter → BitCrusher → Chorus → PitchModulator
-    LowPassFilter  lowPassFilterL;
-    LowPassFilter  lowPassFilterR;
-    BitCrusher     bitCrusher;
-    Chorus         chorus;
-    PitchModulator pitchModulatorL;
-    PitchModulator pitchModulatorR;
-
-    // Base LFO rates (NoiseLFO modulates these each sample)
-    static constexpr float baseTriangleRate = 0.3f;
-    static constexpr float baseSlowRate     = 0.1f;
-    static constexpr float baseMedRate      = 0.5f;
-    static constexpr float baseFastRate     = 2.0f;
-    static constexpr float baseCutoff = 5000.0f;
-
-    // Base sample-rate-reduction depth before ComplexLFO modulation
-    static constexpr int baseReduction = 4;
-
-    double sessionSampleRate = 44100.0;
-
+    // Radio DSP chain
+    BitCrusher             bitCrusher;
+    NoiseGenerator         noiseGen;
+    RadioTuner             tuner;
+    MechanicalDrift        drift;
+    SweepFilter            sweepFilter;
+    StationBurstGenerator  burstGen;
+    BandLimiter            bandLimiter;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
