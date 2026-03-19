@@ -27,19 +27,20 @@ juce_add_plugin(MyPlugin
 target_sources(MyPlugin PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
-        Source/dsp/Oscillator.cpp
-        Source/modulation/NoiseLFO.cpp
-        Source/modulation/TriangleLFO.cpp
-        Source/modulation/ComplexLFO.cpp
-        Source/lowpass/lowpass.cpp
-        Source/bitcrusher/BitCrusher.cpp
-        Source/chorus/Chorus.cpp
-        Source/pitch/PitchModulator.cpp
         Source/player/AudioFilePlayer.cpp
+        Source/bitcrusher/BitCrusher.cpp
+        Source/chorus/chorus.cpp
+        Source/radio/NoiseGenerator.cpp
+        Source/radio/RadioTuner.cpp
+        Source/radio/MechanicalDrift.cpp
+        Source/radio/SweepFilter.cpp
+        Source/radio/StationBurstGenerator.cpp
+        Source/radio/BandLimiter.cpp
 )
 
 target_link_libraries(MyPlugin PRIVATE
         juce::juce_audio_utils
         juce::juce_audio_devices
+        juce::juce_dsp
         juce::juce_gui_basics
 )
