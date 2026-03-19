@@ -1,0 +1,105 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: system-ui, sans-serif;
+    user-select: none;
+}
+
+.plugin-ui {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    gap: 32px;
+    min-height: 100vh;
+}
+
+.plugin-title {
+    margin: 0;
+    font-size: 1.6rem;
+    letter-spacing: 0.15em;
+    color: #a78bfa;
+    text-transform: uppercase;
+}
+
+/* ── Knobs ─────────────────────────────────────────────────────────────── */
+
+.knobs-row {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.knob-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: ns-resize;
+}
+
+.knob {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #3d3d6b, #1a1a3e);
+    border: 2px solid #4c4c8a;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    position: relative;
+    transition: border-color 0.15s;
+}
+
+.knob:hover { border-color: #a78bfa; }
+
+.knob-indicator {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    background: #a78bfa;
+}
+
+.knob-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: #9090b0;
+    text-transform: uppercase;
+}
+
+.knob-value {
+    font-size: 0.75rem;
+    color: #c0c0d8;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Toggles ────────────────────────────────────────────────────────────── */
+
+.toggles-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #9090b0;
+}
+
+.toggle-container input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #a78bfa;
+    cursor: pointer;
+}
