@@ -6,7 +6,7 @@ const imgShading    = "https://www.figma.com/api/mcp/asset/dd344ac6-3167-413a-ab
 const imgFrame66    = "https://www.figma.com/api/mcp/asset/43c9d8b0-fb0a-45bf-856f-c98ccf40b548";
 const imgEllipse34  = "https://www.figma.com/api/mcp/asset/04bcb213-706a-4c16-a8b1-eab4f087e7f9";
 
-export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01, scale = 1.5 }) {
+export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01, scale = 1 }) {
     const [value, setValue] = useState(min);
     const isDragging  = useRef(false);
     const startY      = useRef(0);
@@ -45,14 +45,14 @@ export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01, sc
     return (
         <div
             className="relative h-18 w-14.5 cursor-ns-resize select-none block"
-            style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
+            style={{ zoom: scale }}
             onMouseDown={handleMouseDown}
         >
             {/* Dial body — static button face + shading */}
-            <div className="absolute overflow-hidden rounded-[100px] shadow-[-3px_4px_6.9px_0px_rgba(0,0,0,0.25)]"
+            <div className="absolute overflow-hidden rounded-[100px] drop-shadow-[-2px_3px_7px_rgba(0,0,0,0.25)]"
                  style={{ inset: '24.19% 22.81% 25.81% 21.05%' }}>
                 <img alt="" className="absolute block h-[31px] w-[32px] left-0 top-0 max-w-none" src={imgButtonSide} />
-                <img alt="" className="absolute block size-[35px] left-[-12px] top-[-2px] max-w-none" src={imgShading} />
+                {/*<img alt="" className="absolute block size-[35px] left-[-12px] top-[-2px] max-w-none" src={imgShading} />*/}
                 {/* Rotating face / indicator */}
                 <img
                     alt=""
