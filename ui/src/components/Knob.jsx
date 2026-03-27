@@ -6,7 +6,7 @@ const imgShading    = "https://www.figma.com/api/mcp/asset/dd344ac6-3167-413a-ab
 const imgFrame66    = "https://www.figma.com/api/mcp/asset/43c9d8b0-fb0a-45bf-856f-c98ccf40b548";
 const imgEllipse34  = "https://www.figma.com/api/mcp/asset/04bcb213-706a-4c16-a8b1-eab4f087e7f9";
 
-export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01 }) {
+export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01, scale = 1.5 }) {
     const [value, setValue] = useState(min);
     const isDragging  = useRef(false);
     const startY      = useRef(0);
@@ -44,7 +44,8 @@ export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01 }) 
 
     return (
         <div
-            className="relative h-[62px] w-[57px] cursor-ns-resize select-none"
+            className="relative h-18 w-14.5 cursor-ns-resize select-none block"
+            style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
             onMouseDown={handleMouseDown}
         >
             {/* Dial body — static button face + shading */}
@@ -62,7 +63,7 @@ export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01 }) 
             </div>
 
             {/* Arc range indicator — static */}
-            <div className="absolute" style={{ inset: '19.35% 15.79% 14.52% 12.28%' }}>
+            <div className="absolute pointer-events-none" style={{ inset: '19.35% 15.79% 14.52% 12.28%' }}>
                 <div className="absolute top-0 left-0 right-0 bottom-1/2">
                     <img alt="" className="block max-w-none size-full" src={imgEllipse34} />
                 </div>

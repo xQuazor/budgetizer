@@ -4,6 +4,15 @@ import Antenna from "./components/Antenna.jsx";
 import {Body} from "./components/Body.jsx";
 import Knob from "./components/Knob.jsx";
 import SpeakerGrill from "./components/Speaker.jsx";
+import ModeButton from "./components/ModeButton.jsx";
+
+const smoothIcon = (
+    <div className="absolute inset-0">
+        <img alt="" className="absolute block max-w-none" style={{ left: '-3.5px', top: '0px',  width: '21px', height: '21px' }} src={imgSmoothShading} />
+        <img alt="" className="absolute block max-w-none" style={{ left: '3.5px',  top: '4px',  width: '16px', height: '16px' }} src={imgSmoothButtonSide} />
+        <img alt="" className="absolute block max-w-none" style={{ left: '5.5px',  top: '6px',  width: '14px', height: '14px' }} src={imgSmoothButtonTop} />
+    </div>
+);
 
 
 export default function App() {
@@ -12,13 +21,18 @@ export default function App() {
   const [syncActive,   setSyncActive]   = useState(false);
 
   return (
-    <div className={"w-full h-full"}>
-      <Knob compact={false} paramId="bitDepth" label="Depth" min={1} max={16} step={1} />
-      <SpeakerGrill />
+    <div className={"w-full h-full block"}>
+        <div className={"flex flex-col gap-12 w-fit"}>
+            <ModeButton  label="Smooth" active={smoothActive} onClick={() => setSmoothActive(v => !v)} />
+            {/*<Knob compact={false} paramId="bitDepth" label="Depth" min={1} max={16} step={1} />*/}
+            {/*<Knob compact={false} paramId="rate" label="Rate" min={1} max={16} step={1} />*/}
+        </div>
 
-      <SpeakerLegs/>
-      <Antenna/>
-      <Body/>
+      {/*<SpeakerGrill />*/}
+
+      {/*<SpeakerLegs/>*/}
+      {/*<Antenna/>*/}
+      {/*<Body/>*/}
       {/* UI overlay */}
       {/*<div className="absolute left-[63px] top-[106px] w-[521px] h-[305px] p-6 flex flex-col justify-between">*/}
 
