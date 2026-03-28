@@ -10,24 +10,21 @@ import {Speaker} from "./components/Speaker.jsx";
 import SpeakerLeg from "./components/SpeakerLeg.jsx";
 
 export default function App() {
-  const [smoothActive, setSmoothActive] = useState(false);
+  const [smooth, setSmooth] = useState(false);
+  const [radio, setRadio] = useState(false);
+  const [sync, setSync] = useState(false);
 
-  const [bitDepth1, setBitDepth1] = useState(1);
-  const [rate1, setRate1] = useState(1);
-  const [bitDepth2, setBitDepth2] = useState(1);
-  const [rate2, setRate2] = useState(1);
-  const [bitDepth3, setBitDepth3] = useState(1);
-  const [rate3, setRate3] = useState(1);
+  const [bitDepth, setBitDepth] = useState(8);
+  const [rate, setRate] = useState(5);
+  const [burstDrift, setBurstDrift] = useState(20);
+  const [depth, setDepth] = useState(25);
+  const [mix, setMix] = useState(50);
 
-  useEffect(() => { setParameter("bitDepth1", bitDepth1); }, [bitDepth1]);
-  useEffect(() => { setParameter("rate1",     rate1);     }, [rate1]);
-  useEffect(() => { setParameter("bitDepth2", bitDepth2); }, [bitDepth2]);
-  useEffect(() => { setParameter("rate2",     rate2);     }, [rate2]);
-  useEffect(() => { setParameter("bitDepth3", bitDepth3); }, [bitDepth3]);
-  useEffect(() => { setParameter("rate3",     rate3);     }, [rate3]);
+  useEffect(() => { setParameter("bitDepth1", bitDepth); }, [bitDepth]);
+  useEffect(() => { setParameter("rate1",     rate);     }, [rate]);
 
   const settingContainerStyles =
-    "relative flex flex-col items-center justify-center w-fit gap-4 rounded-xl px-3 py-4";
+    "relative flex flex-col items-center justify-between w-fit gap-4 rounded-xl px-3 py-4";
   const knobContainerStyles =
     "flex flex-col items-center justify-center gap-2 w-fit";
 
@@ -58,25 +55,26 @@ export default function App() {
                 />
                 <ModeButton
                   label="Smooth"
-                  active={smoothActive}
-                  onClick={() => setSmoothActive((v) => !v)}
+                  value={smooth}
+                  onClick={() => setSmooth((v) => !v)}
                 />
                 <div className={knobContainerStyles}>
                   <Knob
-                    label="Depth"
+                    label="Rate"
+                    unit={"kHz"}
                     min={1}
-                    max={16}
+                    max={22}
                     step={1}
-                    value={bitDepth1}
-                    setValue={setBitDepth1}
+                    value={bitDepth}
+                    setValue={setBitDepth}
                   />
                   <Knob
-                    label="Rate"
+                    label="Bits"
                     min={1}
-                    max={16}
+                    max={24}
                     step={1}
-                    value={rate1}
-                    setValue={setRate1}
+                    value={rate}
+                    setValue={setRate}
                   />
                 </div>
               </div>
@@ -99,26 +97,28 @@ export default function App() {
                   }}
                 />
                 <ModeButton
-                  label="Smooth"
-                  active={smoothActive}
-                  onClick={() => setSmoothActive((v) => !v)}
+                  label="Radio"
+                  value={radio}
+                  onClick={() => setRadio((v) => !v)}
                 />
                 <div className={knobContainerStyles}>
                   <Knob
-                    label="Depth"
+                    label="Burst & Drift"
+                    unit={"%"}
                     min={1}
-                    max={16}
+                    max={100}
                     step={1}
-                    value={bitDepth2}
-                    setValue={setBitDepth2}
+                    value={burstDrift}
+                    setValue={setBurstDrift}
                   />
                   <Knob
-                    label="Rate"
+                    label="Depth"
+                    unit={"%"}
                     min={1}
-                    max={16}
+                    max={100}
                     step={1}
-                    value={rate2}
-                    setValue={setRate2}
+                    value={depth}
+                    setValue={setDepth}
                   />
                 </div>
               </div>
@@ -143,26 +143,19 @@ export default function App() {
                   }}
                 />
                 <ModeButton
-                  label="Smooth"
-                  active={smoothActive}
-                  onClick={() => setSmoothActive((v) => !v)}
+                  label="Sync"
+                  value={sync}
+                  onClick={() => setSync((v) => !v)}
                 />
                 <div className={knobContainerStyles}>
                   <Knob
-                    label="Depth"
+                    label="Mix"
+                    unit={"%"}
                     min={1}
-                    max={16}
+                    max={100}
                     step={1}
-                    value={bitDepth3}
-                    setValue={setBitDepth3}
-                  />
-                  <Knob
-                    label="Rate"
-                    min={1}
-                    max={16}
-                    step={1}
-                    value={rate3}
-                    setValue={setRate3}
+                    value={mix}
+                    setValue={setMix}
                   />
                 </div>
               </div>
