@@ -5,8 +5,14 @@ project(MyPlugin VERSION 0.0.1)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+#  MacMini
+#  /Users/dovis/Documents/JUCE
+
+#  Macbook Air
+#  /Users/dovydas/CLionProjects/JUCE
+
 add_subdirectory(
-        /Users/dovis/Documents/JUCE
+        /Users/dovydas/CLionProjects/JUCE
         ${CMAKE_BINARY_DIR}/JUCE
 )
 

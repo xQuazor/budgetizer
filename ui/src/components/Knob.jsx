@@ -6,15 +6,13 @@ const imgShading    = "https://www.figma.com/api/mcp/asset/dd344ac6-3167-413a-ab
 const imgFrame66    = "https://www.figma.com/api/mcp/asset/43c9d8b0-fb0a-45bf-856f-c98ccf40b548";
 const imgEllipse34  = "https://www.figma.com/api/mcp/asset/04bcb213-706a-4c16-a8b1-eab4f087e7f9";
 
-export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01, scale = 1 }) {
-    const [value, setValue] = useState(min);
+export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01, scale = 1, value: externalValue, setValue: externalSetValue }) {
+    const [internalValue, setInternalValue] = useState(min);
+    const value    = externalValue    !== undefined ? externalValue    : internalValue;
+    const setValue = externalSetValue !== undefined ? externalSetValue : setInternalValue;
     const isDragging  = useRef(false);
     const startY      = useRef(0);
     const startValue  = useRef(0);
-
-    useEffect(() => {
-        return onParameterChange(paramId, (newValue) => setValue(newValue));
-    }, [paramId]);
 
     const handleMouseMove = useCallback((e) => {
         if (!isDragging.current) return;
@@ -32,6 +30,7 @@ export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01, sc
     }, [handleMouseMove]);
 
     const handleMouseDown = useCallback((e) => {
+        e.preventDefault();
         isDragging.current = true;
         startY.current     = e.clientY;
         startValue.current = value;
@@ -51,8 +50,8 @@ export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01, sc
             {/* Dial body — static button face + shading */}
             <div className="absolute overflow-hidden rounded-[100px] drop-shadow-[-2px_3px_7px_rgba(0,0,0,0.25)]"
                  style={{ inset: '24.19% 22.81% 25.81% 21.05%' }}>
-                <img alt="" className="absolute block h-[31px] w-[32px] left-0 top-0 max-w-none" src={imgButtonSide} />
-                {/*<img alt="" className="absolute block size-[35px] left-[-12px] top-[-2px] max-w-none" src={imgShading} />*/}
+                <img draggable="false" alt="" className="absolute block h-[31px] w-[32px] left-0 top-0 max-w-none" src={imgButtonSide} />
+                {/*<img draggable="false" alt="" className="absolute block size-[35px] left-[-12px] top-[-2px] max-w-none" src={imgShading} />*/}
                 {/* Rotating face / indicator */}
                 <img
                     alt=""
@@ -65,7 +64,7 @@ export default function Knob({ paramId, label, min = 0, max = 1, step = 0.01, sc
             {/* Arc range indicator — static */}
             <div className="absolute pointer-events-none" style={{ inset: '19.35% 15.79% 14.52% 12.28%' }}>
                 <div className="absolute top-0 left-0 right-0 bottom-1/2">
-                    <img alt="" className="block max-w-none size-full" src={imgEllipse34} />
+                    <img draggable="false" alt="" className="block max-w-none size-full" src={imgEllipse34} />
                 </div>
             </div>
 
