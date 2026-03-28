@@ -20,8 +20,7 @@ export default function App() {
   const [depth, setDepth] = useState(25);
   const [mix, setMix] = useState(50);
 
-  useEffect(() => { setParameter("bitDepth1", bitDepth); }, [bitDepth]);
-  useEffect(() => { setParameter("rate1",     rate);     }, [rate]);
+  useEffect(() => { setParameter("masterMix",     mix);     }, [mix]);
 
   const settingContainerStyles =
     "relative flex flex-col items-center justify-between w-fit gap-4 rounded-xl px-3 py-4";
@@ -151,9 +150,9 @@ export default function App() {
                   <Knob
                     label="Mix"
                     unit={"%"}
-                    min={1}
-                    max={100}
-                    step={1}
+                    min={0.01}
+                    max={1.0}
+                    step={0.01}
                     value={mix}
                     setValue={setMix}
                   />
