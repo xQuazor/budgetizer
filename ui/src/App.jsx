@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { setParameter } from "./bridge";
 import Knob from "./components/Knob.jsx";
 import ModeButton from "./components/ModeButton.jsx";
@@ -10,6 +10,7 @@ import {Speaker} from "./components/Speaker.jsx";
 import SpeakerLeg from "./components/SpeakerLeg.jsx";
 
 export default function App() {
+  const containerRef = useRef(null);
   const [smooth, setSmooth] = useState(false);
   const [radio, setRadio] = useState(false);
   const [sync, setSync] = useState(false);
@@ -21,6 +22,21 @@ export default function App() {
   const [mix, setMix] = useState(50);
 
   useEffect(() => { setParameter("masterMix",     mix);     }, [mix]);
+  useEffect(() => { setParameter("sampleReductionRate",     rate);     }, [rate]);
+  useEffect(() => { setParameter("bitDepth",     bitDepth);     }, [bitDepth]);
+  useEffect(() => { setParameter("radio",     radio);     }, [radio]);
+  useEffect(() => { setParameter("smooth",     smooth);     }, [smooth]);
+
+  useEffect(() => {
+    if (!containerRef.current || typeof window.__JUCE__ === 'undefined') return;
+    requestAnimationFrame(() => {
+      const rect = containerRef.current.getBoundingClientRect();
+      window.__JUCE__.backend.emitEvent("resize", {
+        width:  Math.round(rect.width),
+        height: Math.round(rect.height),
+      });
+    });
+  }, []);
 
   const settingContainerStyles =
     "relative flex flex-col items-center justify-between w-fit gap-4 rounded-xl px-3 py-4";
@@ -28,7 +44,7 @@ export default function App() {
     "flex flex-col items-center justify-center gap-2 w-fit";
 
   return (
-    <div className={"w-full h-full"}>
+    <div key={"ApplicationContainer"} ref={containerRef} className={"w-fit h-fit"}>
       <Speaker className={"relative py-2 flex flex-col gap w-fit"}>
         <Antenna className={"-top-1"}/>
         <Body>
@@ -64,16 +80,16 @@ export default function App() {
                     min={1}
                     max={22}
                     step={1}
-                    value={bitDepth}
-                    setValue={setBitDepth}
+                    value={rate}
+                    setValue={setRate}
                   />
                   <Knob
                     label="Bits"
                     min={1}
                     max={24}
                     step={1}
-                    value={rate}
-                    setValue={setRate}
+                    value={bitDepth}
+                    setValue={setBitDepth}
                   />
                 </div>
               </div>

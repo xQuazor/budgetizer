@@ -1,11 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&display=swap');
 @import "tailwindcss";
 
+:root {
+  --ui-scale: 1.2;
+}
+
 html, body {
   margin: 0;
   overflow: hidden;
   width: 100dvw;
   height: 100dvh;
+  transform: scale(var(--ui-scale));
+  transform-origin: top left;
 }
 
 body {

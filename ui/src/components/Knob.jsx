@@ -1,12 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { setParameter, onParameterChange } from "../bridge";
-
-const imgButtonSide =
-  "https://www.figma.com/api/mcp/asset/e7810ea3-ab0b-4250-a658-acb1745fce54";
-const imgShading =
-  "https://www.figma.com/api/mcp/asset/dd344ac6-3167-413a-aba0-c895761ce97c";
-const imgFrame66 =
-  "https://www.figma.com/api/mcp/asset/43c9d8b0-fb0a-45bf-856f-c98ccf40b548";
 const imgEllipse34 =
   "https://www.figma.com/api/mcp/asset/04bcb213-706a-4c16-a8b1-eab4f087e7f9";
 
@@ -70,26 +63,27 @@ export default function Knob({
     >
       {/* Dial body — static button face + shading */}
       <div
-        className="absolute overflow-hidden rounded-[100px] drop-shadow-[-2px_3px_7px_rgba(0,0,0,0.25)]"
-        style={{ inset: "24.19% 22.81% 25.81% 21.05%" }}
+        className="absolute overflow-hidden rounded-full drop-shadow-[-2px_3px_7px_rgba(0,0,0,0.25)] w-8 h-8"
+        style={{
+            inset: "24.19% 22.81% 25.81% 21.05%" ,
+            border: `1px solid rgba(0, 0, 0, 0.7)`,
+        }}
       >
-        <img
-          draggable="false"
-          alt=""
-          className="absolute block h-[31px] w-[32px] left-0 top-0 max-w-none"
-          src={imgButtonSide}
-        />
-        {/*<img draggable="false" alt="" className="absolute block size-[35px] left-[-12px] top-[-2px] max-w-none" src={imgShading} />*/}
-        {/* Rotating face / indicator */}
-        <img
-          alt=""
-          className="absolute block size-[29px] left-[3px] top-[2px] max-w-none"
-          src={imgFrame66}
-          style={{
-            transformOrigin: "center center",
-            transform: `rotate(${rotation}deg)`,
-          }}
-        />
+          <div className={"absolute rounded-full bg-[#70A0C3] w-8 h-8"} style={{ boxShadow: "inset 6px 3px 4px 0px rgba(0,0,0,0.5)" }}>
+
+          </div>
+          <div id="here" className={"-right-1.25 -bottom-0.75 overflow-hidden rounded-full absolute bg-[#70A0C3] w-8 h-8"}
+               style={{ boxShadow: "inset -2px 3px 4px 0px rgba(255,255,255,0.25)"}}>
+              <div className={"absolute w-3 h-0.75 bg-white rotate-90 translate-1/2 right-1/2"}>
+
+              </div>
+              <div className={"absolute overflow-hidden rounded-full w-8 h-8"}
+                   style={{
+                          border: `1px solid rgba(255, 255, 255, 0.1)`,
+                          mixBlendMode: "overlay"
+                    }}>
+              </div>
+          </div>
       </div>
 
       {/* Arc range indicator — static */}

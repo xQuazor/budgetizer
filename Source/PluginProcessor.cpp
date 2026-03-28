@@ -31,6 +31,14 @@ AudioPluginAudioProcessor::createParameters()
         "burstDensity", "Burst Density", 0.0f,   1.0f,    0.25f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "bandwidth",    "Bandwidth",     2000.0f, 5000.0f, 3500.0f));
+
+
+    params.push_back (std::make_unique<juce::AudioParameterBool> ("smooth", "Smooth", false));
+    params.push_back (std::make_unique<juce::AudioParameterBool> ("radio", "Radio", false));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "bitDepth",    "Bit Depth",    0,    24,    8));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "sampleReductionRate",    "Sample Reduction Rate",    0,    22,    1));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "masterMix",    "Master Mix",    0.0f,    1.0f,    1.0f));
     return { params.begin(), params.end() };
@@ -79,8 +87,6 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovis/CLionProjects/degrainator/music"));
 
     bitCrusher.prepare (sampleRate);
-    bitCrusher.setReductionFactor (8);
-    bitCrusher.setBitRate (8);
     bitCrusher.setFeedback (0.0f);
 
     noiseGen.prepare    (sampleRate);
@@ -127,6 +133,14 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const float burstDensity = *apvts.getRawParameterValue ("burstDensity");
     const float bandwidth    = *apvts.getRawParameterValue ("bandwidth");
     const float masterMix    = *apvts.getRawParameterValue ("masterMix");
+    const int sampleRateReduction    = *apvts.getRawParameterValue ("sampleReductionRate");
+    const int bitDepth = *apvts.getRawParameterValue ("bitDepth");
+    const bool radio = *apvts.getRawParameterValue ("radio");
+    const bool smooth = *apvts.getRawParameterValue ("smooth");
+
+    bitCrusher.setBitRate (bitDepth);
+    bitCrusher.setReductionFactor(sampleRateReduction);
+    bitCrusher.setInterpolated(smooth);
 
     tuner.setSweepTime (tuneSpeed);
     noiseGen.setLevel  (staticAmount * 0.4f);
@@ -162,7 +176,9 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             float sig = bitCrusher.processSample (src, ch);
 
             // 2. Station burst (gate the crushed signal + noise through an envelope)
-            sig = burstGen.process (sig  );
+            if (radio) {
+                sig = burstGen.process (sig);
+            }
 
             // 3. AM distortion (tanh soft saturation, drive = 2)
             sig = std::tanh (sig * 2.0f);

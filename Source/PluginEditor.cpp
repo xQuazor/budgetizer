@@ -9,10 +9,21 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
           .withEventListener("paramChange",
               [this](juce::var msg) { paramBridge.handleJSMessage(msg); })
           .withEventListener("uiReady",
-              [this](juce::var) { paramBridge.sendFullState(); })),
+              [this](juce::var) { paramBridge.sendFullState(); })
+          .withEventListener("resize",
+              [this](juce::var msg) {
+                  int w = (int) msg["width"];
+                  int h = (int) msg["height"];
+                  if (w > 0 && h > 0) {
+                      juce::Component::SafePointer<AudioPluginAudioProcessorEditor> safe(this);
+                      juce::MessageManager::callAsync([safe, w, h] {
+                          if (safe != nullptr) safe->setSize(w, h);
+                      });
+                  }
+              })),
       paramBridge(p.apvts, browser)
 {
-    setSize(800, 600);
+    setSize(900, 600);
     addAndMakeVisible(browser);
 
 #if JUCE_DEBUG
