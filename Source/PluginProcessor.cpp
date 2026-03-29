@@ -40,6 +40,8 @@ AudioPluginAudioProcessor::createParameters()
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "sampleReductionRate",    "Sample Reduction Rate",    0,    22,    1));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "drive",    "Drive",    1.0f,    10.0f,    2.0f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "masterMix",    "Master Mix",    0.0f,    1.0f,    1.0f));
     return { params.begin(), params.end() };
 }
@@ -88,6 +90,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 
     bitCrusher.prepare (sampleRate);
     bitCrusher.setFeedback (0.0f);
+    pitchModulator.prepare (sampleRate);
 
     noiseGen.prepare    (sampleRate);
     tuner.prepare       (sampleRate);
@@ -133,6 +136,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const float burstDensity = *apvts.getRawParameterValue ("burstDensity");
     const float bandwidth    = *apvts.getRawParameterValue ("bandwidth");
     const float masterMix    = *apvts.getRawParameterValue ("masterMix");
+    const float drive    = *apvts.getRawParameterValue ("drive");
     const int sampleRateReduction    = *apvts.getRawParameterValue ("sampleReductionRate");
     const int bitDepth = *apvts.getRawParameterValue ("bitDepth");
     const bool radio = *apvts.getRawParameterValue ("radio");
@@ -151,6 +155,17 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const float q = juce::jmap (bandwidth, 2000.0f, 5000.0f, 8.0f, 3.0f);
     sweepFilter.setQ (q);
 
+    // Temporary per-channel storage so we can level-match tanh after the block
+    const int numChannels = std::min (totalNumOutputChannels, 2);
+    std::vector<float> drySig[2], wetSig[2];
+    for (int ch = 0; ch < numChannels; ++ch)
+    {
+        drySig[ch].resize (numSamples);
+        wetSig[ch].resize (numSamples);
+    }
+    float preSumSq[2]  = {0.0f, 0.0f};   // RMS accumulator before tanh
+    float postSumSq[2] = {0.0f, 0.0f};   // RMS accumulator after tanh
+
     for (int sample = 0; sample < numSamples; ++sample)
     {
         // ── Advance modulation ──────────────────────────────────────────────
@@ -168,31 +183,51 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         float srcL, srcR;
         audioFilePlayer.getNextStereoSample (srcL, srcR);
 
-        for (int ch = 0; ch < std::min (totalNumOutputChannels, 2); ++ch)
+        for (int ch = 0; ch < numChannels; ++ch)
         {
             const float src = (ch == 0) ? srcL : srcR;
+            drySig[ch][sample] = src;
 
             // 1. BitCrusher — sample-rate and bit-depth reduction
             float sig = bitCrusher.processSample (src, ch);
 
             // 2. Station burst (gate the crushed signal + noise through an envelope)
-            if (radio) {
+            if (radio)
                 sig = burstGen.process (sig);
+
+            // 3. AM distortion (tanh soft saturation) — accumulate pre/post RMS
+            preSumSq[ch]  += sig * sig;
+            sig = std::tanh (sig * drive);
+            postSumSq[ch] += sig * sig;
+
+            if (radio)
+            {
+                // 4. Band limit (200 Hz – 5 kHz)
+                sig = bandLimiter.processSample (sig, ch);
             }
 
-            // 3. AM distortion (tanh soft saturation, drive = 2)
-            sig = std::tanh (sig * 2.0f);
-
-            // 4. Band limit (200 Hz – 5 kHz)
-            sig = bandLimiter.processSample (sig, ch);
-
-            // 5. Master mix: blend dry source with fully processed signal
-            buffer.getWritePointer (ch)[sample] = src * (1.0f - masterMix) + sig * masterMix;
+            wetSig[ch][sample] = sig;
         }
+    }
+
+    // 5. Apply block-level RMS compensation then master mix
+    for (int ch = 0; ch < numChannels; ++ch)
+    {
+        const float gain = computeTanhLevelMatchGain (preSumSq[ch], postSumSq[ch]);
+        auto* out = buffer.getWritePointer (ch);
+        for (int s = 0; s < numSamples; ++s)
+            out[s] = drySig[ch][s] * (1.0f - masterMix) + wetSig[ch][s] * gain * masterMix;
     }
 
     for (int ch = 2; ch < totalNumOutputChannels; ++ch)
         buffer.clear (ch, 0, numSamples);
+}
+
+//==============================================================================
+float AudioPluginAudioProcessor::computeTanhLevelMatchGain (float preSumSq, float postSumSq)
+{
+    if (postSumSq < 1.0e-12f) return 1.0f;
+    return std::sqrt (preSumSq / postSumSq);
 }
 
 //==============================================================================

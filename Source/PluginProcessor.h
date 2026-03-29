@@ -9,6 +9,8 @@
 #include "radio/BandLimiter.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include "pitch/PitchModulator.h"
+
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
@@ -43,17 +45,24 @@ public:
     juce::AudioProcessorValueTreeState apvts;
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
 
+    // Returns a gain scalar so that applying it to the post-tanh signal restores
+    // the same RMS level as the pre-tanh signal had over the current block.
+    static float computeTanhLevelMatchGain (float preSumSq, float postSumSq);
+
 private:
     AudioFilePlayer        audioFilePlayer;
 
     // Radio DSP chain
-    BitCrusher             bitCrusher;
     NoiseGenerator         noiseGen;
     RadioTuner             tuner;
     MechanicalDrift        drift;
     SweepFilter            sweepFilter;
     StationBurstGenerator  burstGen;
     BandLimiter            bandLimiter;
+
+    BitCrusher             bitCrusher;
+    PitchModulator         pitchModulator;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

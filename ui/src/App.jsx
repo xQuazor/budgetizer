@@ -19,6 +19,7 @@ export default function App() {
   const [rate, setRate] = useState(5);
   const [burstDrift, setBurstDrift] = useState(20);
   const [depth, setDepth] = useState(25);
+  const [drive, setDrive] = useState(2.0);
   const [mix, setMix] = useState(50);
 
   useEffect(() => { setParameter("masterMix",     mix);     }, [mix]);
@@ -26,6 +27,7 @@ export default function App() {
   useEffect(() => { setParameter("bitDepth",     bitDepth);     }, [bitDepth]);
   useEffect(() => { setParameter("radio",     radio);     }, [radio]);
   useEffect(() => { setParameter("smooth",     smooth);     }, [smooth]);
+  useEffect(() => { setParameter("drive",     drive);     }, [drive]);
 
   useEffect(() => {
     if (!containerRef.current || typeof window.__JUCE__ === 'undefined') return;
@@ -163,6 +165,15 @@ export default function App() {
                   onClick={() => setSync((v) => !v)}
                 />
                 <div className={knobContainerStyles}>
+                    <Knob
+                        label="Drive"
+                        unit={"x"}
+                        min={1.0}
+                        max={10.0}
+                        step={1.0}
+                        value={drive}
+                        setValue={setDrive}
+                    />
                   <Knob
                     label="Mix"
                     unit={"%"}
