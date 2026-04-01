@@ -32,7 +32,7 @@ AudioPluginAudioProcessor::createParameters()
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "bandwidth",    "Bandwidth",     2000.0f, 5000.0f, 3500.0f));
 
-
+    params.push_back (std::make_unique<juce::AudioParameterBool> ("useAudioInput", "useAudioInput", false));
     params.push_back (std::make_unique<juce::AudioParameterBool> ("smooth", "Smooth", false));
     params.push_back (std::make_unique<juce::AudioParameterBool> ("radio", "Radio", false));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
@@ -141,6 +141,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const int bitDepth = *apvts.getRawParameterValue ("bitDepth");
     const bool radio = *apvts.getRawParameterValue ("radio");
     const bool smooth = *apvts.getRawParameterValue ("smooth");
+    const bool useAudioInput = *apvts.getRawParameterValue ("useAudioInput");
 
     bitCrusher.setBitRate (bitDepth);
     bitCrusher.setReductionFactor(sampleRateReduction);
@@ -178,10 +179,17 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         sweepFilter.setFrequency (freq);
         burstGen.setCurrentFrequency (freq);
 
-
         // ── Stereo signal chain ─────────────────────────────────────────────
         float srcL, srcR;
-        audioFilePlayer.getNextStereoSample (srcL, srcR);
+        if (useAudioInput)
+        {
+            srcL = buffer.getReadPointer (0)[sample];
+            srcR = (numChannels > 1) ? buffer.getReadPointer (1)[sample] : srcL;
+        }
+        else
+        {
+            audioFilePlayer.getNextStereoSample (srcL, srcR);
+        }
 
         for (int ch = 0; ch < numChannels; ++ch)
         {

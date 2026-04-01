@@ -1,3 +1,3 @@
-export const Speaker = ({children, className}) => {
-    return <div className={`${className}`}>{children}</div>
+export const Speaker = ({children, className, style}) => {
+    return <div className={`${className}`} style={style}>{children}</div>
 }

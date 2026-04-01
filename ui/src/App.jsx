@@ -15,6 +15,8 @@ export default function App() {
   const [radio, setRadio] = useState(false);
   const [sync, setSync] = useState(false);
 
+  const [externalAudio, setExternalAudio] = useState(false);
+
   const [bitDepth, setBitDepth] = useState(8);
   const [rate, setRate] = useState(5);
   const [burstDrift, setBurstDrift] = useState(20);
@@ -28,6 +30,8 @@ export default function App() {
   useEffect(() => { setParameter("radio",     radio);     }, [radio]);
   useEffect(() => { setParameter("smooth",     smooth);     }, [smooth]);
   useEffect(() => { setParameter("drive",     drive);     }, [drive]);
+
+  useEffect(() => { setParameter("useAudioInput",     externalAudio);     }, [externalAudio]);
 
   useEffect(() => {
     if (!containerRef.current || typeof window.__JUCE__ === 'undefined') return;
@@ -61,8 +65,8 @@ export default function App() {
 
   return (
     <div key={"ApplicationContainer"} ref={containerRef} className={"w-fit h-fit"}>
-
-      <Speaker className={"relative py-2 flex flex-col gap w-fit pt-14 pb-4 mx-4 h-fit"}>
+      <Speaker className={"relative py-2 flex flex-col gap w-fit pt-14 pb-4 mx-4 h-fit"}
+      >
         <Antenna className={"-top-18"}/>
         <div className={"absolute flex flex-row w-full bottom-2.75 px-16 justify-between"}>
             <SpeakerLeg/>
@@ -87,7 +91,7 @@ export default function App() {
                     unit={"kHz"}
                     min={1}
                     max={22}
-                    step={1}
+                    step={0.05}
                     value={rate}
                     setValue={setRate}
                   />
@@ -143,6 +147,11 @@ export default function App() {
                   label="Sync"
                   value={sync}
                   onClick={() => setSync((v) => !v)}
+                />
+                <ModeButton
+                    label="External Audio"
+                    value={externalAudio}
+                    onClick={() => setExternalAudio((v) => !v)}
                 />
                 <div className={knobContainerStyles}>
                     <Knob

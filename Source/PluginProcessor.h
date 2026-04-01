@@ -45,6 +45,7 @@ public:
     juce::AudioProcessorValueTreeState apvts;
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
 
+
     // Returns a gain scalar so that applying it to the post-tanh signal restores
     // the same RMS level as the pre-tanh signal had over the current block.
     static float computeTanhLevelMatchGain (float preSumSq, float postSumSq);

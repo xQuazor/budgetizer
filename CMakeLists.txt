@@ -24,8 +24,8 @@ juce_add_plugin(MyPlugin
         IS_MIDI_EFFECT FALSE
         EDITOR_WANTS_KEYBOARD_FOCUS TRUE
         COPY_PLUGIN_AFTER_BUILD TRUE
-        PLUGIN_MANUFACTURER_CODE Manu
-        PLUGIN_CODE Plug
+        PLUGIN_MANUFACTURER_CODE Dgrz
+        PLUGIN_CODE Dgin
         FORMATS VST3 Standalone
         PRODUCT_NAME "MyPlugin"
 )
@@ -61,6 +61,10 @@ if(UI_DIST_FILES)
     juce_add_binary_data(PluginUIData SOURCES ${UI_DIST_FILES})
     target_link_libraries(MyPlugin PRIVATE PluginUIData)
 endif()
+
+target_compile_definitions(MyPlugin PUBLIC
+        JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
+)
 
 target_link_libraries(MyPlugin PRIVATE
         juce::juce_audio_utils
