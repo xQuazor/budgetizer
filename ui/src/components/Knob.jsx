@@ -92,16 +92,17 @@ export default function Knob({
             rotate: `${rotation}deg`,
           }}
         >
+            {/*dial white stroke*/}
           <div
             className={
-              "absolute w-3 h-0.75 bg-white rotate-90 translate-1/2 right-1/2"
+              "absolute w-3 h-0.75 bg-white opacity-75 rotate-90 translate-1/2 right-1/2"
             }
           />
         </div>
         {/* White highlight — static layer on top */}
         <div
           className="-right-0.25 -bottom-0.25 overflow-hidden rounded-full absolute w-7.75 h-7.75 pointer-events-none"
-          style={{ boxShadow: "inset -2px 3px 4px 0px rgba(255,255,255,0.3)" }}
+          style={{ boxShadow: "inset -2px 3px 4px 2px rgba(255,255,255,0.3)" }}
         />
       </div>
 

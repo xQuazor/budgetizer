@@ -11,7 +11,7 @@ export default function BrandingText() {
             fontWeight: 600,
             fontSize: '18px',
             color: '#d8d8d8',
-            lineHeight: 'normal',
+            lineHeight: '20px',
           }}
         >
           BUDGETIZER

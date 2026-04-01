@@ -40,6 +40,20 @@ export default function App() {
     });
   }, []);
 
+  const containerBorderStyle = {
+        position: "absolute",
+        inset: 0,
+        borderRadius: "inherit",
+        border: "2px solid transparent",
+        background:
+            "radial-gradient(circle, #000000 0%, #666666 100%) border-box",
+        WebkitMask:
+            "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
+        WebkitMaskComposite: "destination-out",
+        maskComposite: "exclude",
+        mixBlendMode: "screen",
+        pointerEvents: "none",
+    }
   const settingContainerStyles =
     "relative flex flex-col items-center justify-between w-fit gap-4 rounded-xl px-3 py-4";
   const knobContainerStyles =
@@ -47,28 +61,20 @@ export default function App() {
 
   return (
     <div key={"ApplicationContainer"} ref={containerRef} className={"w-fit h-fit"}>
-      <Speaker className={"relative py-2 flex flex-col gap w-fit"}>
-        <Antenna className={"-top-1"}/>
+
+      <Speaker className={"relative py-2 flex flex-col gap w-fit pt-14 pb-4 mx-4 h-fit"}>
+        <Antenna className={"-top-18"}/>
+        <div className={"absolute flex flex-row w-full bottom-2.75 px-16 justify-between"}>
+            <SpeakerLeg/>
+            <SpeakerLeg/>
+        </div>
         <Body>
           <div className={"flex flex-col gap-4 p-6 w-fit"}>
             <BrandingText />
             <div className={"flex flex-row gap-4"}>
               <div className={settingContainerStyles} key={"SettingContainer"}>
                 <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: "inherit",
-                    border: "1px solid transparent",
-                    background:
-                      "radial-gradient(circle, #000000 0%, #666666 100%) border-box",
-                    WebkitMask:
-                      "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                    WebkitMaskComposite: "destination-out",
-                    maskComposite: "exclude",
-                    mixBlendMode: "screen",
-                    pointerEvents: "none",
-                  }}
+                  style={containerBorderStyle}
                 />
                 <ModeButton
                   label="Smooth"
@@ -98,20 +104,7 @@ export default function App() {
 
               <div className={settingContainerStyles} key={"SettingContainer2"}>
                 <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: "inherit",
-                    border: "1px solid transparent",
-                    background:
-                      "radial-gradient(circle, #000000 0%, #666666 100%) border-box",
-                    WebkitMask:
-                      "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                    WebkitMaskComposite: "destination-out",
-                    maskComposite: "exclude",
-                    mixBlendMode: "screen",
-                    pointerEvents: "none",
-                  }}
+                    style={containerBorderStyle}
                 />
                 <ModeButton
                   label="Radio"
@@ -144,20 +137,7 @@ export default function App() {
 
               <div className={settingContainerStyles} key={"SettingContainer3"}>
                 <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: "inherit",
-                    border: "1px solid transparent",
-                    background:
-                      "radial-gradient(circle, #000000 0%, #666666 100%) border-box",
-                    WebkitMask:
-                      "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                    WebkitMaskComposite: "destination-out",
-                    maskComposite: "exclude",
-                    mixBlendMode: "screen",
-                    pointerEvents: "none",
-                  }}
+                    style={containerBorderStyle}
                 />
                 <ModeButton
                   label="Sync"
@@ -188,10 +168,6 @@ export default function App() {
             </div>
           </div>
         </Body>
-        {/*<div className={"flex flex-row w-full px-16 justify-between absolute bottom-1"}>*/}
-        {/*    <SpeakerLeg/>*/}
-        {/*    <SpeakerLeg/>*/}
-        {/*</div>*/}
       </Speaker>
     </div>
   );

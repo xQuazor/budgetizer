@@ -52,17 +52,26 @@ export const Body = ({ children }) => {
             style={{
               backgroundImage: `url(${aluminiumTexture})`,
               backgroundSize: "cover",
-              opacity: 0.25,
-              mixBlendMode: "multiply",
+              opacity: 0.35,
+              mixBlendMode: "plus-darker",
             }}
           />
+            <div
+                className="absolute inset-0 rounded-[48px] pointer-events-none"
+                style={{
+                    backgroundImage: `url(${topLayerShading})`,
+                    backgroundSize: "cover",
+                    opacity: 0.99,
+                    mixBlendMode: "soft-light",
+                }}
+            />
           <div
             className="absolute inset-0 rounded-[48px] pointer-events-none"
             style={{
               backgroundImage: `url(${topLayerShading})`,
               backgroundSize: "cover",
-              opacity: 1,
-              mixBlendMode: "soft-light",
+              opacity: 0.4,
+              mixBlendMode: "saturation",
             }}
           />
           {children}

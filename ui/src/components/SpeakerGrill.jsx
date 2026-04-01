@@ -28,7 +28,7 @@ export default function SpeakerGrill() {
                             className="block w-2.5 h-2.5 shrink-0 rounded-full"
                             style={cell === 'd' || cell === 's' ? {
                                 background: "#677077",
-                                boxShadow: "-1px -1px 0.5px 0 rgba(187, 200, 210, 0.70) inset, 2px 5px 7.1px 1px #4D5459 inset",
+                                boxShadow: "-1px -1px 0.5px 0 #9EA8B0 inset, 2px 5px 7.1px 1px #1E1E1E inset",
                             } : {
                                 background: "rgba(255, 255, 255, 0.01)",
                                 boxShadow: "-1px -1px 0.5px 0 rgba(255, 255, 255, 0.15) inset, 2px 1px 1.9px 0 rgba(0, 0, 0, 0.25) inset",
