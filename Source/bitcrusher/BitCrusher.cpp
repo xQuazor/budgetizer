@@ -14,7 +14,6 @@ void BitCrusher::setSampleRate(double newSampleRate)
 {
     sampleRate = newSampleRate;
 }
-
 void BitCrusher::setReductionFactor(int newFactor) { reductionFactor = (newFactor >= 1) ? newFactor : 1; }
 void BitCrusher::setBitRate(int newBitRate)         { bitRate = (newBitRate >= 1 && newBitRate <= 32) ? newBitRate : 16; }
 void BitCrusher::setDithering(bool enabled)         { dithering      = enabled; }
@@ -22,7 +21,6 @@ void BitCrusher::setInterpolated(bool enabled)      { isInterpolated = enabled; 
 void BitCrusher::setFeedback(float amount)            { feedbackAmount    = amount; }
 void BitCrusher::setSaturation(float amount)          { saturationAmount  = amount; }
 void BitCrusher::setOversamplingEnabled(bool enabled) { oversamplingEnabled = enabled; }
-
 void BitCrusher::setDecayHold(bool enabled, float coeff)
 {
     decayHoldEnabled = enabled;
@@ -117,7 +115,6 @@ float BitCrusher::quantizeSample(float sample) const
 }
 
 // ── Main DSP ──────────────────────────────────────────────────────────────────
-
 float BitCrusher::processSample(float signal, int channel)
 {
     // ── 1. Quantisation-error feedback via internal Chorus ────────────────────

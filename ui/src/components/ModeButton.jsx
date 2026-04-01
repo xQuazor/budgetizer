@@ -9,7 +9,10 @@ export default function ModeButton({ label, value = false, onClick }) {
       <div className={"flex flex-col items-center justify-center"}>
         <div
           className="relative size-5 overflow-hidden rounded-[16rem]"
-          style={{ opacity: value ? 1 : 0.5 }}
+          style={{
+            opacity: value ? 0.5 : 1,
+            boxShadow: !value ? undefined : "0 0 12px 6px rgba(255,255,255,0.18), 0 0 4px 2px rgba(255,255,255,0.3)",
+          }}
         >
           <Circle
             key={"Button Top"}

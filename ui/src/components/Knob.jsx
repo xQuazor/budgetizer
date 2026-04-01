@@ -63,47 +63,71 @@ export default function Knob({
     >
       {/* Dial body — static button face + shading */}
       <div
-        className="absolute overflow-hidden rounded-full drop-shadow-[-2px_3px_7px_rgba(0,0,0,0.25)] w-8 h-8"
+        className="absolute rounded-full drop-shadow-[-2px_3px_7px_rgba(0,0,0,0.25)] w-8 h-8"
         style={{
-            inset: "24.19% 22.81% 25.81% 21.05%" ,
-            border: `1px solid rgba(0, 0, 0, 0.7)`,
+          inset: "24.19% 22.81% 25.81% 21.05%",
+          outline: `1px solid rgba(0, 0, 0, 0.7)`,
         }}
       >
-          <div className={"absolute rounded-full bg-[#70A0C3] w-8 h-8"} style={{ boxShadow: "inset 6px 3px 4px 0px rgba(0,0,0,0.5)" }}>
+        <div
+          className={"absolute rounded-full bg-[#70A0C3] w-8 h-8"}
+          style={{ boxShadow: "inset 6px 3px 4px 0px rgba(0,0,0,0.45)" }}
+        />
+        <div
+          id={"this"}
+          className={"absolute rounded-full w-8 h-8"}
+          style={{
+            background:
+              "radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, 0.40) 0%, rgba(0, 0, 0, 0.00) 100%)",
+            mixBlendMode: "overlay",
+          }}
+        />
 
-          </div>
-          <div id="here" className={"-right-1.25 -bottom-0.75 overflow-hidden rounded-full absolute bg-[#70A0C3] w-8 h-8"}
-               style={{ boxShadow: "inset -2px 3px 4px 0px rgba(255,255,255,0.25)"}}>
-              <div className={"absolute w-3 h-0.75 bg-white rotate-90 translate-1/2 right-1/2"}>
-
-              </div>
-              <div className={"absolute overflow-hidden rounded-full w-8 h-8"}
-                   style={{
-                          border: `1px solid rgba(255, 255, 255, 0.1)`,
-                          mixBlendMode: "overlay"
-                    }}>
-              </div>
-          </div>
+        <div
+          id="here"
+          className={
+            "-right-0.25 -bottom-0.25 overflow-hidden rounded-full absolute bg-[#70A0C3] w-7.75 h-7.75"
+          }
+          style={{
+            rotate: `${rotation}deg`,
+          }}
+        >
+          <div
+            className={
+              "absolute w-3 h-0.75 bg-white rotate-90 translate-1/2 right-1/2"
+            }
+          />
+        </div>
+        {/* White highlight — static layer on top */}
+        <div
+          className="-right-0.25 -bottom-0.25 overflow-hidden rounded-full absolute w-7.75 h-7.75 pointer-events-none"
+          style={{ boxShadow: "inset -2px 3px 4px 0px rgba(255,255,255,0.3)" }}
+        />
       </div>
 
-      {/* Arc range indicator — static */}
+      {/* Arc range indicator — top half circle */}
       <div
         className="absolute pointer-events-none"
         style={{ inset: "19.35% 15.79% 14.52% 12.28%" }}
       >
-        <div className="absolute top-0 left-0 right-0 bottom-1/2">
-          <img
-            draggable="false"
-            alt=""
-            className="block max-w-none size-full"
-            src={imgEllipse34}
-          />
-        </div>
+        <div
+          className="absolute top-0 left-0 right-0"
+          style={{
+            height: "50%",
+            borderRadius: "100px 100px 0 0",
+            border: "1px solid rgba(255,255,255,0.6)",
+            borderBottom: "none",
+            background: "transparent",
+          }}
+        />
       </div>
 
       {/* Text overlay — value / range / label */}
       <div className="absolute inset-0 flex flex-col gap-[16px] items-start font-['Inter',sans-serif] font-normal text-[8px] text-[#ddd] leading-normal pointer-events-none">
-        <p className="w-full text-center shrink-0">{displayValue}{unit}</p>
+        <p className="w-full text-center shrink-0">
+          {displayValue}
+          {unit}
+        </p>
         <div className="flex items-center justify-between w-[57px] shrink-0 whitespace-nowrap">
           <span>-</span>
           <span>+</span>
