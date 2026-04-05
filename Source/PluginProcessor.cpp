@@ -21,28 +21,26 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 AudioPluginAudioProcessor::createParameters()
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "tuneSpeed",    "Tune Speed",    50.0f,  2000.0f, 1000.0f));
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "staticAmount", "Static Amount", 0.0f,   1.0f,    0.0f));
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "drift",        "Drift",         0.0f,   1.0f,    0.08f));
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "burstDensity", "Burst Density", 0.0f,   1.0f,    0.25f));
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "bandwidth",    "Bandwidth",     2000.0f, 5000.0f, 3500.0f));
 
-    params.push_back (std::make_unique<juce::AudioParameterBool> ("useAudioInput", "useAudioInput", false));
+    // Bit Crusher Layout
     params.push_back (std::make_unique<juce::AudioParameterBool> ("smooth", "Smooth", false));
     params.push_back (std::make_unique<juce::AudioParameterBool> ("radio", "Radio", false));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "bitDepth",    "Bit Depth",    0,    24,    8));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "sampleReductionRate",    "Sample Reduction Rate",    0,    22,    1));
+
+    // Radio Layout
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "burstDensity", "Burst", 0.0f,   1.0f,    0.25f));
+
+    // Master Knob
+    params.push_back (std::make_unique<juce::AudioParameterBool> ("useAudioInput", "useAudioInput", false));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "drive",    "Drive",    1.0f,    10.0f,    2.0f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "masterMix",    "Master Mix",    0.0f,    1.0f,    1.0f));
+
     return { params.begin(), params.end() };
 }
 
@@ -86,18 +84,12 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     juce::ignoreUnused (samplesPerBlock);
 
     audioFilePlayer.prepare (sampleRate);
-    audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovis/CLionProjects/degrainator/music"));
+    audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovydas/CLionProjects/demo/music"));
 
     bitCrusher.prepare (sampleRate);
     bitCrusher.setFeedback (0.0f);
     pitchModulator.prepare (sampleRate);
-
-    noiseGen.prepare    (sampleRate);
-    tuner.prepare       (sampleRate);
-    drift.prepare       (sampleRate);
-    sweepFilter.prepare (sampleRate);
-    burstGen.prepare    (sampleRate);
-    bandLimiter.prepare (sampleRate);
+    radioEffect.setSampleRate(sampleRate);
 }
 
 void AudioPluginAudioProcessor::releaseResources() {}
@@ -129,32 +121,23 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const int totalNumOutputChannels = getTotalNumOutputChannels();
     const int numSamples             = buffer.getNumSamples();
 
-    // Read parameters once per block
-    const float tuneSpeed    = *apvts.getRawParameterValue ("tuneSpeed");
-    const float staticAmount = *apvts.getRawParameterValue ("staticAmount");
-    const float driftAmount  = *apvts.getRawParameterValue ("drift");
-    const float burstDensity = *apvts.getRawParameterValue ("burstDensity");
-    const float bandwidth    = *apvts.getRawParameterValue ("bandwidth");
-    const float masterMix    = *apvts.getRawParameterValue ("masterMix");
-    const float drive    = *apvts.getRawParameterValue ("drive");
+    // Bit Crusher Chain
     const int sampleRateReduction    = *apvts.getRawParameterValue ("sampleReductionRate");
     const int bitDepth = *apvts.getRawParameterValue ("bitDepth");
-    const bool radio = *apvts.getRawParameterValue ("radio");
     const bool smooth = *apvts.getRawParameterValue ("smooth");
+
+    // Master Chain
+    const float drive    = *apvts.getRawParameterValue ("drive");
+    const float masterMix    = *apvts.getRawParameterValue ("masterMix");
     const bool useAudioInput = *apvts.getRawParameterValue ("useAudioInput");
+
+    //Radio Chain
+    const bool radio = *apvts.getRawParameterValue ("radio");
 
     bitCrusher.setBitRate (bitDepth);
     bitCrusher.setReductionFactor(sampleRateReduction);
     bitCrusher.setInterpolated(smooth);
 
-    tuner.setSweepTime (tuneSpeed);
-    noiseGen.setLevel  (staticAmount * 0.4f);
-    drift.setAmount    (driftAmount);
-    burstGen.setDensity (burstDensity);
-
-    // bandwidth 2000..5000 Hz → Q 8..3
-    const float q = juce::jmap (bandwidth, 2000.0f, 5000.0f, 8.0f, 3.0f);
-    sweepFilter.setQ (q);
 
     // Temporary per-channel storage so we can level-match tanh after the block
     const int numChannels = std::min (totalNumOutputChannels, 2);
@@ -169,15 +152,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        // ── Advance modulation ──────────────────────────────────────────────
-        tuner.advance();
-        const float noise = noiseGen.process();
-
-        float freq = tuner.getCurrentFrequency() + drift.process() + noise;
-        freq = juce::jlimit (200.0f, 6000.0f, freq);
-
-        sweepFilter.setFrequency (freq);
-        burstGen.setCurrentFrequency (freq);
 
         // ── Stereo signal chain ─────────────────────────────────────────────
         float srcL, srcR;
@@ -199,20 +173,14 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             // 1. BitCrusher — sample-rate and bit-depth reduction
             float sig = bitCrusher.processSample (src, ch);
 
-            // 2. Station burst (gate the crushed signal + noise through an envelope)
-            if (radio)
-                sig = burstGen.process (sig);
+            if (radio) {
+                sig = radioEffect.processSample(sig);
+            }
 
             // 3. AM distortion (tanh soft saturation) — accumulate pre/post RMS
             preSumSq[ch]  += sig * sig;
             sig = std::tanh (sig * drive);
             postSumSq[ch] += sig * sig;
-
-            if (radio)
-            {
-                // 4. Band limit (200 Hz – 5 kHz)
-                sig = bandLimiter.processSample (sig, ch);
-            }
 
             wetSig[ch][sample] = sig;
         }

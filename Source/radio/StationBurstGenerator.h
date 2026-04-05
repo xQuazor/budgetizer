@@ -10,7 +10,7 @@ public:
 
 private:
     double sampleRate  = 44100.0;
-    float  density     = 0.5f;
+    float  density     = 1.f;
     float  envValue    = 0.0f;
     float  attackCoeff = 0.0f;
     float  decayCoeff  = 0.0f;

@@ -1,0 +1,129 @@
+#include "Radio.h"
+
+void Radio::setSampleRate (double sr) {
+    sampleRate = sr;
+    noiseGen.prepare(sr);
+    burstGen.prepare(sr);
+    bandLimiter.prepare(sr);
+    rateModulator.setSampleRate(sr);
+    rateModulator.setRateSlow   (0.07f);
+    rateModulator.setRateMedium (0.23f);
+    rateModulator.setRateFast   (0.61f);
+    formantShifter.setSampleRate(sr);
+    pitchShifter.setSampleRate(sr);
+}
+
+void Radio::setHoldAmount (float amount) {
+    holdAmount = std::clamp(amount, 0.0f, 1.0f);
+}
+
+void Radio::setHoldRate (float hz) {
+    triangleRate = std::max(hz, 0.01f);
+}
+
+void Radio::setFormantShift (float amount) {
+    formantShifter.setShiftAmount(amount);
+}
+
+void Radio::setPitchRatio (float r) {
+    pitchShifter.setRatio(r);
+}
+
+void Radio::setPitchMode (PitchShifter::Mode m) {
+    pitchShifter.setMode(m);
+}
+
+void Radio::setDropoutAmount (float amount) {
+    dropoutAmount = amount < 0.0f ? 0.0f : (amount > 1.0f ? 1.0f : amount);
+}
+
+void Radio::setNoiseLevel (float level) {
+    noiseGen.setLevel(level);
+}
+
+// Periodically cuts the signal and replaces it with noise.
+// dropoutAmount controls how frequent and how long the dropouts are.
+// When gateOpen: pass signal through. When closed: emit noise.
+float Radio::applyNoiseGate (float signal)
+{
+    if (--gateCounter <= 0)
+    {
+        gateOpen = !gateOpen;
+
+        if (gateOpen)
+        {
+            // Open duration: long gap between dropouts; shorter at higher dropoutAmount
+            int maxOpen = static_cast<int>(sampleRate * 2.0f);    // up to 2 s
+            int minOpen = static_cast<int>(sampleRate * 0.05f);   // 50 ms minimum
+            float openRange = float(maxOpen - minOpen);
+            gateCounter = minOpen + static_cast<int>((1.0f - dropoutAmount) * openRange
+                          * gateRng.nextFloat());
+        }
+        else
+        {
+            // Closed (noise) duration: longer at higher dropoutAmount; short burst at low
+            int maxClosed = static_cast<int>(sampleRate * 0.4f);  // up to 400 ms
+            int minClosed = static_cast<int>(sampleRate * 0.01f); // 10 ms minimum
+            float closedRange = float(maxClosed - minClosed);
+            gateCounter = minClosed + static_cast<int>(dropoutAmount * closedRange
+                          * gateRng.nextFloat());
+        }
+    }
+
+    return gateOpen ? signal : noiseGen.process();
+}
+
+// Triangle LFO: phase advances 0→1 per cycle.
+// ComplexLFO modulates the instantaneous rate around the base, making cycle lengths uneven.
+void Radio::tickTriangleLFO()
+{
+    // returnModulation() outputs ~-1..1; scale to ±50% of base rate
+    float mod = rateModulator.returnModulation();
+    float effectiveRate = triangleRate * (1.f + 1.0f * mod);
+    if (effectiveRate < 0.01f) effectiveRate = 0.01f;
+
+    trianglePhase += effectiveRate / static_cast<float>(sampleRate);
+    if (trianglePhase >= 1.0f) trianglePhase -= 1.0f;
+
+    float tri = ((trianglePhase < 0.5f) ? trianglePhase * 2.0f
+                                        : (1.0f - trianglePhase) * 2.0f) * 0.55f;
+
+    isHolding = (tri > 0.5f) && (holdAmount > 0.0f);
+}
+
+// Captures incoming audio into a 32-sample loopBuffer when passing through.
+// When isHolding, replays (loops) the captured bracket instead.
+float Radio::sampleHold (float input)
+{
+    // Detect rising edge: decide once per bracket whether this hold gets pitch-shifted
+    if (isHolding && !prevHolding)
+        holdIsPitched = gateRng.nextFloat() > 0.5f;
+    prevHolding = isHolding;
+
+    if (!isHolding)
+    {
+        loopBuffer[loopWritePos] = input;
+        loopWritePos = (loopWritePos + 1) & 8191;
+        loopReadPos  = loopWritePos;
+        return input;
+    }
+
+    float held = loopBuffer[loopReadPos];
+    loopReadPos = (loopReadPos + 1) & 8191;
+    return holdIsPitched ? pitchShifter.processSample(held) : held;
+}
+
+float Radio::processSample(float sample) {
+
+    tickTriangleLFO();
+    float mod = rateModulator.returnModulation();
+    //How close to station
+    burstGen.setCurrentFrequency(500 * mod);
+    float b = burstGen.process(sample);
+
+    float held  = sampleHold(b);
+    float shifted = formantShifter.processSample(held);
+    float gated = applyNoiseGate(shifted);
+
+    return gated;
+}

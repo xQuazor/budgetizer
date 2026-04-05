@@ -12,7 +12,7 @@ import SpeakerLeg from "./components/SpeakerLeg.jsx";
 export default function App() {
   const containerRef = useRef(null);
   const [smooth, setSmooth] = useState(false);
-  const [radio, setRadio] = useState(false);
+  const [radio, setRadio] = useState(true);
   const [sync, setSync] = useState(false);
 
   const [externalAudio, setExternalAudio] = useState(false);
@@ -24,13 +24,20 @@ export default function App() {
   const [drive, setDrive] = useState(2.0);
   const [mix, setMix] = useState(50);
 
+  // Master
   useEffect(() => { setParameter("masterMix",     mix);     }, [mix]);
-  useEffect(() => { setParameter("sampleReductionRate",     rate);     }, [rate]);
-  useEffect(() => { setParameter("bitDepth",     bitDepth);     }, [bitDepth]);
-  useEffect(() => { setParameter("radio",     radio);     }, [radio]);
-  useEffect(() => { setParameter("smooth",     smooth);     }, [smooth]);
   useEffect(() => { setParameter("drive",     drive);     }, [drive]);
 
+  // Digitizer
+  useEffect(() => { setParameter("sampleReductionRate",     rate);     }, [rate]);
+  useEffect(() => { setParameter("bitDepth",     bitDepth);     }, [bitDepth]);
+  useEffect(() => { setParameter("smooth",     smooth);     }, [smooth]);
+
+  // Radio
+  useEffect(() => { setParameter("radio",     radio);     }, [radio]);
+  useEffect(() => { setParameter("burstDrift",     burstDrift);     }, [burstDrift]);
+
+  // External Input
   useEffect(() => { setParameter("useAudioInput",     externalAudio);     }, [externalAudio]);
 
   useEffect(() => {

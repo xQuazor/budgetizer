@@ -1,15 +1,10 @@
 #pragma once
 #include "player/AudioFilePlayer.h"
 #include "bitcrusher/BitCrusher.h"
-#include "radio/NoiseGenerator.h"
-#include "radio/RadioTuner.h"
-#include "radio/MechanicalDrift.h"
-#include "radio/SweepFilter.h"
-#include "radio/StationBurstGenerator.h"
-#include "radio/BandLimiter.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "pitch/PitchModulator.h"
+#include "radio/Radio.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -53,17 +48,10 @@ public:
 private:
     AudioFilePlayer        audioFilePlayer;
 
-    // Radio DSP chain
-    NoiseGenerator         noiseGen;
-    RadioTuner             tuner;
-    MechanicalDrift        drift;
-    SweepFilter            sweepFilter;
-    StationBurstGenerator  burstGen;
-    BandLimiter            bandLimiter;
-
     BitCrusher             bitCrusher;
     PitchModulator         pitchModulator;
 
+    Radio radioEffect;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
