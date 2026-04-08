@@ -1,0 +1,42 @@
+export const PRESETS = [
+  {
+    name: "Vintage FM",
+    smooth: true,  radio: true,
+    bitDepth: 18,  rate: 20,
+    burstDrift: 180, depth: 0.22,
+    drive: 2.0,    mix: 0.85,
+    emphasis: 0.78, multipathMix: 0.32, multipathDelay: 0.75, ceiling: 0.65,
+  },
+  {
+    name: "Clean Crush",
+    smooth: false, radio: false,
+    bitDepth: 10,  rate: 14,
+    burstDrift: 40,  depth: 0.08,
+    drive: 1.5,    mix: 0.70,
+    emphasis: 0.15, multipathMix: 0.08, multipathDelay: 0.4,  ceiling: 0.92,
+  },
+  {
+    name: "Signal Lost",
+    smooth: false, radio: true,
+    bitDepth: 5,   rate: 7,
+    burstDrift: 1400, depth: 0.82,
+    drive: 5.0,    mix: 1.0,
+    emphasis: 0.55, multipathMix: 0.85, multipathDelay: 2.1,  ceiling: 0.38,
+  },
+  {
+    name: "Deep Space",
+    smooth: false, radio: true,
+    bitDepth: 3,   rate: 4,
+    burstDrift: 3200, depth: 0.97,
+    drive: 8.0,    mix: 0.92,
+    emphasis: 1.0,  multipathMix: 0.92, multipathDelay: 2.85, ceiling: 0.28,
+  },
+  {
+    name: "Lo-Fi Drift",
+    smooth: true,  radio: true,
+    bitDepth: 14,  rate: 17,
+    burstDrift: 70,  depth: 0.14,
+    drive: 2.5,    mix: 0.62,
+    emphasis: 0.42, multipathMix: 0.22, multipathDelay: 1.3,  ceiling: 0.82,
+  },
+];

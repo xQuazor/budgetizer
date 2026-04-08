@@ -13,7 +13,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                      #endif
                        ),
       apvts (*this, nullptr, "Parameters", createParameters())
-{}
+{
+    licensed.store(LicenseValidator::checkSaved().valid);
+}
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
 
@@ -32,7 +34,18 @@ AudioPluginAudioProcessor::createParameters()
 
     // Radio Layout
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "burstDensity", "Burst", 0.0f,   1.0f,    0.25f));
+        "drift", "drift", 0.0f,   2500.0f,    500.0f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "depth", "depth", 0.0f,   100.0f,    25.0f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "emphasis",      "Emphasis",      0.0f, 1.0f,  0.5f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "multipathMix",  "Multipath Mix", 0.0f, 1.0f,  0.3f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "multipathDelay","Multipath Delay",0.1f, 3.0f, 1.0f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        "ceiling",       "Ceiling",       0.1f, 1.0f,  0.7f));
+
 
     // Master Knob
     params.push_back (std::make_unique<juce::AudioParameterBool> ("useAudioInput", "useAudioInput", false));
@@ -84,12 +97,14 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     juce::ignoreUnused (samplesPerBlock);
 
     audioFilePlayer.prepare (sampleRate);
-    audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovydas/CLionProjects/demo/music"));
+    audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovis/CLionProjects/degrainator/music"));
 
     bitCrusher.prepare (sampleRate);
     bitCrusher.setFeedback (0.0f);
     pitchModulator.prepare (sampleRate);
     radioEffect.setSampleRate(sampleRate);
+    complexLFO.setSampleRate (sampleRate);
+    chorus.prepare (sampleRate, 2);
 }
 
 void AudioPluginAudioProcessor::releaseResources() {}
@@ -116,6 +131,13 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                               juce::MidiBuffer& midiMessages)
 {
     juce::ignoreUnused (midiMessages);
+
+    if (!licensed.load())
+    {
+        buffer.clear();
+        return;
+    }
+
     juce::ScopedNoDenormals noDenormals;
 
     const int totalNumOutputChannels = getTotalNumOutputChannels();
@@ -132,11 +154,22 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const bool useAudioInput = *apvts.getRawParameterValue ("useAudioInput");
 
     //Radio Chain
-    const bool radio = *apvts.getRawParameterValue ("radio");
+    const bool  radio          = *apvts.getRawParameterValue ("radio");
+    const float drift          = *apvts.getRawParameterValue ("drift");
+    const float depth          = *apvts.getRawParameterValue ("depth");
+    const float emphasis       = *apvts.getRawParameterValue ("emphasis");
+    const float multipathMix   = *apvts.getRawParameterValue ("multipathMix");
+    const float multipathDelay = *apvts.getRawParameterValue ("multipathDelay");
+    const float ceiling        = *apvts.getRawParameterValue ("ceiling");
 
     bitCrusher.setBitRate (bitDepth);
     bitCrusher.setReductionFactor(sampleRateReduction);
     bitCrusher.setInterpolated(smooth);
+    radioEffect.setTriangleDepth   (depth);
+    radioEffect.setEmphasis        (emphasis);
+    radioEffect.setMultipathMix    (multipathMix);
+    radioEffect.setMultipathDelay  (multipathDelay);
+    radioEffect.setLimiterCeiling  (ceiling);
 
 
     // Temporary per-channel storage so we can level-match tanh after the block
@@ -169,12 +202,15 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         {
             const float src = (ch == 0) ? srcL : srcR;
             drySig[ch][sample] = src;
+            float mod = complexLFO.returnModulation();
 
             // 1. BitCrusher — sample-rate and bit-depth reduction
             float sig = bitCrusher.processSample (src, ch);
 
             if (radio) {
+                radioEffect.setCurrentFrequency(drift);
                 sig = radioEffect.processSample(sig);
+                // sig = chorus.processSample(sig, ch);
             }
 
             // 3. AM distortion (tanh soft saturation) — accumulate pre/post RMS

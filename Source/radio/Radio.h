@@ -1,11 +1,12 @@
 #pragma once
-#include "BandLimiter.h"
 #include "StationBurstGenerator.h"
-#include "SweepFilter.h"
 #include "../noise/NoiseGenerator.h"
 #include "../modulation/ComplexLFO.h"
 #include "FormantShifter.h"
 #include "PitchShifter.h"
+#include "PreEmphasisFilter.h"
+#include "MultipathFilter.h"
+#include "RadioLimiter.h"
 
 class Radio
 {
@@ -18,15 +19,22 @@ public:
     void setPitchMode     (PitchShifter::Mode m);
     void setDropoutAmount (float amount);  // 0 = no dropouts, 1 = frequent
     void setNoiseLevel    (float level);   // noise amplitude during dropouts
+    void setCurrentFrequency (float frequency);
+    void setTriangleDepth    (float triangleDepth);
+    void setEmphasis         (float amount);   // 0 = flat, 1 = full FM pre-emphasis
+    void setMultipathMix     (float mix);      // 0-1, reflection strength
+    void setMultipathDelay   (float ms);       // 0.1-3.0 ms
+    void setLimiterCeiling   (float linear);   // 0.1-1.0
     float processSample (float sample);
 
 private:
     double sampleRate = 44100.0;
 
     NoiseGenerator         noiseGen;
-    SweepFilter            sweepFilter;
     StationBurstGenerator  burstGen;
-    BandLimiter            bandLimiter;
+    PreEmphasisFilter      preEmphasis;
+    MultipathFilter        multipath;
+    RadioLimiter           limiter;
 
     // Sample hold / looper (10-sample bracket)
     float loopBuffer[8192] = {};
@@ -40,6 +48,7 @@ private:
     // Triangle LFO driving the hold on/off
     float trianglePhase = 0.0f;
     float triangleRate  = 0.5f;  // Hz base rate
+    float triangleDepth = 0.5f;
     ComplexLFO          rateModulator;  // modulates triangleRate for unpredictability
     FormantShifter      formantShifter;
     PitchShifter        pitchShifter;

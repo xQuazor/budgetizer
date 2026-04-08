@@ -2,6 +2,7 @@
 
 const listeners = new Map();  // paramId -> Set<callback>
 let parameterState = {};
+const licenseListeners = new Set();
 
 const isJUCE = typeof window.__JUCE__ !== 'undefined';
 
@@ -26,6 +27,17 @@ export function getParameterValue(paramId) {
     return parameterState[paramId];
 }
 
+export function submitLicense(key) {
+    if (isJUCE) {
+        window.__JUCE__.backend.emitEvent("submitLicense", { key });
+    }
+}
+
+export function onLicenseStatus(callback) {
+    licenseListeners.add(callback);
+    return () => licenseListeners.delete(callback);
+}
+
 function notifyListeners(paramId, value) {
     listeners.get(paramId)?.forEach(cb => cb(value));
 }
@@ -44,6 +56,11 @@ if (isJUCE) {
         for (const [id, value] of Object.entries(event)) {
             notifyListeners(id, value);
         }
+    });
+
+    // C++ → JS: license validation result
+    window.__JUCE__.backend.addEventListener("licenseStatus", (event) => {
+        licenseListeners.forEach(cb => cb(event));
     });
 
     // Signal to C++ that the UI is ready

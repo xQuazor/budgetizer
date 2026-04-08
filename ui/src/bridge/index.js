@@ -8,4 +8,8 @@ const bridge = typeof window.__JUCE__ !== 'undefined' ? juceBridge : mockBridge;
 
 export const setParameter       = bridge.setParameter;
 export const onParameterChange  = bridge.onParameterChange;
+
+export const submitLicense       = bridge.submitLicense;
+
+export const onLicenseStatus = bridge.onLicenseStatus;
 export const getParameterValue  = bridge.getParameterValue;

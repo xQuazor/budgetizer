@@ -5,6 +5,10 @@
 
 #include "pitch/PitchModulator.h"
 #include "radio/Radio.h"
+#include "modulation/ComplexLFO.h"
+#include "chorus/chorus.h"
+#include "license/LicenseValidator.h"
+#include <atomic>
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -40,18 +44,22 @@ public:
     juce::AudioProcessorValueTreeState apvts;
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
 
+    void setLicensed(bool value) { licensed.store(value); }
+    bool isLicensed() const      { return licensed.load(); }
 
     // Returns a gain scalar so that applying it to the post-tanh signal restores
     // the same RMS level as the pre-tanh signal had over the current block.
     static float computeTanhLevelMatchGain (float preSumSq, float postSumSq);
 
 private:
+    std::atomic<bool> licensed { false };
     AudioFilePlayer        audioFilePlayer;
 
     BitCrusher             bitCrusher;
     PitchModulator         pitchModulator;
-
-    Radio radioEffect;
+    ComplexLFO             complexLFO;
+    Radio                  radioEffect;
+    Chorus                 chorus;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

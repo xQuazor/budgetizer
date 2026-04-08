@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #  /Users/dovydas/CLionProjects/JUCE
 
 add_subdirectory(
-        /Users/dovydas/CLionProjects/JUCE
+        /Users/dovis/Documents/JUCE
         ${CMAKE_BINARY_DIR}/JUCE
 )
 
@@ -34,6 +34,7 @@ target_sources(MyPlugin PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
         Source/ParameterBridge.cpp
+        Source/license/LicenseValidator.cpp
         Source/modulation/NoiseLFO.cpp
         Source/modulation/TriangleLFO.cpp
         Source/modulation/ComplexLFO.cpp
@@ -44,12 +45,13 @@ target_sources(MyPlugin PRIVATE
         Source/bitcrusher/BitCrusher.cpp
         Source/chorus/chorus.cpp
         Source/noise/NoiseGenerator.cpp
-        Source/radio/SweepFilter.cpp
         Source/radio/StationBurstGenerator.cpp
-        Source/radio/BandLimiter.cpp
         Source/radio/Radio.cpp
         Source/radio/FormantShifter.cpp
         Source/radio/PitchShifter.cpp
+        Source/radio/PreEmphasisFilter.cpp
+        Source/radio/MultipathFilter.cpp
+        Source/radio/RadioLimiter.cpp
 )
 
 # --- React UI BinaryData (built from ui/dist/) ---
@@ -70,4 +72,6 @@ target_link_libraries(MyPlugin PRIVATE
         juce::juce_audio_devices
         juce::juce_dsp
         juce::juce_gui_basics
+        juce::juce_cryptography
+        juce::juce_data_structures
 )

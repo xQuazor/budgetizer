@@ -4,13 +4,15 @@ void Radio::setSampleRate (double sr) {
     sampleRate = sr;
     noiseGen.prepare(sr);
     burstGen.prepare(sr);
-    bandLimiter.prepare(sr);
     rateModulator.setSampleRate(sr);
     rateModulator.setRateSlow   (0.07f);
     rateModulator.setRateMedium (0.23f);
     rateModulator.setRateFast   (0.61f);
     formantShifter.setSampleRate(sr);
     pitchShifter.setSampleRate(sr);
+    preEmphasis.prepare(sr);
+    multipath.prepare(sr);
+    limiter.prepare(sr);
 }
 
 void Radio::setHoldAmount (float amount) {
@@ -40,6 +42,19 @@ void Radio::setDropoutAmount (float amount) {
 void Radio::setNoiseLevel (float level) {
     noiseGen.setLevel(level);
 }
+
+void Radio::setCurrentFrequency (float frequency) {
+    burstGen.setCurrentFrequency(frequency);
+}
+
+void Radio::setTriangleDepth (float depth) {
+    triangleDepth = std::clamp(depth, 0.0f, 1.0f);
+}
+
+void Radio::setEmphasis (float amount)      { preEmphasis.setAmount(amount); }
+void Radio::setMultipathMix (float mix)     { multipath.setMix(mix); }
+void Radio::setMultipathDelay (float ms)    { multipath.setBaseDelay(ms); }
+void Radio::setLimiterCeiling (float lin)   { limiter.setThreshold(lin); }
 
 // Periodically cuts the signal and replaces it with noise.
 // dropoutAmount controls how frequent and how long the dropouts are.
@@ -86,7 +101,7 @@ void Radio::tickTriangleLFO()
     if (trianglePhase >= 1.0f) trianglePhase -= 1.0f;
 
     float tri = ((trianglePhase < 0.5f) ? trianglePhase * 2.0f
-                                        : (1.0f - trianglePhase) * 2.0f) * 0.55f;
+                                        : (1.0f - trianglePhase) * 2.0f) * triangleDepth;
 
     isHolding = (tri > 0.5f) && (holdAmount > 0.0f);
 }
@@ -116,14 +131,14 @@ float Radio::sampleHold (float input)
 float Radio::processSample(float sample) {
 
     tickTriangleLFO();
-    float mod = rateModulator.returnModulation();
-    //How close to station
-    burstGen.setCurrentFrequency(500 * mod);
-    float b = burstGen.process(sample);
 
-    float held  = sampleHold(b);
-    float shifted = formantShifter.processSample(held);
-    float gated = applyNoiseGate(shifted);
+    float sig = preEmphasis.processSample(sample);
+    sig = burstGen.process(sig);
+    sig = sampleHold(sig);
+    sig = multipath.processSample(sig);
+    sig = formantShifter.processSample(sig);
+    sig = limiter.processSample(sig);
+    sig = applyNoiseGate(sig);
 
-    return gated;
+    return sig;
 }

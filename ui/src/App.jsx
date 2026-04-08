@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { setParameter } from "./bridge";
+import { setParameter, onLicenseStatus } from "./bridge";
+import LicenseOverlay from "./components/LicenseOverlay.jsx";
+import Toolbar from "./components/Toolbar.jsx";
+import { PRESETS } from "./presets.js";
 import Knob from "./components/Knob.jsx";
 import ModeButton from "./components/ModeButton.jsx";
 import SpeakerGrill from "./components/SpeakerGrill.jsx";
@@ -11,6 +14,13 @@ import SpeakerLeg from "./components/SpeakerLeg.jsx";
 
 export default function App() {
   const containerRef = useRef(null);
+
+  const [licenseValid, setLicenseValid] = useState(false);
+
+  useEffect(() => {
+    return onLicenseStatus((status) => setLicenseValid(status.valid));
+  }, []);
+
   const [smooth, setSmooth] = useState(false);
   const [radio, setRadio] = useState(true);
   const [sync, setSync] = useState(false);
@@ -21,8 +31,27 @@ export default function App() {
   const [rate, setRate] = useState(5);
   const [burstDrift, setBurstDrift] = useState(20);
   const [depth, setDepth] = useState(25);
+  const [emphasis, setEmphasis] = useState(0.5);
+  const [multipathMix, setMultipathMix] = useState(0.3);
+  const [multipathDelay, setMultipathDelay] = useState(1.0);
+  const [ceiling, setCeiling] = useState(0.7);
   const [drive, setDrive] = useState(2.0);
   const [mix, setMix] = useState(50);
+
+  const loadPreset = (p) => {
+    setSmooth(p.smooth);
+    setRadio(p.radio);
+    setBitDepth(p.bitDepth);
+    setRate(p.rate);
+    setBurstDrift(p.burstDrift);
+    setDepth(p.depth);
+    setDrive(p.drive);
+    setMix(p.mix);
+    setEmphasis(p.emphasis);
+    setMultipathMix(p.multipathMix);
+    setMultipathDelay(p.multipathDelay);
+    setCeiling(p.ceiling);
+  };
 
   // Master
   useEffect(() => { setParameter("masterMix",     mix);     }, [mix]);
@@ -34,8 +63,13 @@ export default function App() {
   useEffect(() => { setParameter("smooth",     smooth);     }, [smooth]);
 
   // Radio
-  useEffect(() => { setParameter("radio",     radio);     }, [radio]);
-  useEffect(() => { setParameter("burstDrift",     burstDrift);     }, [burstDrift]);
+  useEffect(() => { setParameter("radio",          radio);        }, [radio]);
+  useEffect(() => { setParameter("drift",          burstDrift);   }, [burstDrift]);
+  useEffect(() => { setParameter("depth",          depth);        }, [depth]);
+  useEffect(() => { setParameter("emphasis",       emphasis);     }, [emphasis]);
+  useEffect(() => { setParameter("multipathMix",   multipathMix); }, [multipathMix]);
+  useEffect(() => { setParameter("multipathDelay", multipathDelay); }, [multipathDelay]);
+  useEffect(() => { setParameter("ceiling",        ceiling);      }, [ceiling]);
 
   // External Input
   useEffect(() => { setParameter("useAudioInput",     externalAudio);     }, [externalAudio]);
@@ -71,7 +105,8 @@ export default function App() {
     "flex flex-col items-center justify-center gap-2 w-fit";
 
   return (
-    <div key={"ApplicationContainer"} ref={containerRef} className={"w-fit h-fit"}>
+    <div key={"ApplicationContainer"} ref={containerRef} className={"w-fit h-fit"} style={{ position: "relative", display: "flex", flexDirection: "column" }}>
+      <Toolbar presets={PRESETS} onPresetLoad={loadPreset} />
       <Speaker className={"relative py-2 flex flex-col gap w-fit pt-14 pb-4 mx-4 h-fit"}
       >
         <Antenna className={"-top-18"}/>
@@ -124,22 +159,55 @@ export default function App() {
                 />
                 <div className={knobContainerStyles}>
                   <Knob
-                    label="Burst & Drift"
+                    label="Gate"
                     unit={"%"}
                     min={1}
-                    max={100}
+                    max={5000}
                     step={1}
                     value={burstDrift}
                     setValue={setBurstDrift}
                   />
                   <Knob
-                    label="Depth"
+                    label="Chaos"
                     unit={"%"}
-                    min={1}
-                    max={100}
-                    step={1}
+                    min={0.01}
+                    max={1}
+                    step={0.01}
                     value={depth}
                     setValue={setDepth}
+                  />
+                  <Knob
+                    label="Emphasis"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={emphasis}
+                    setValue={setEmphasis}
+                  />
+                  <Knob
+                    label="Multipath"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={multipathMix}
+                    setValue={setMultipathMix}
+                  />
+                  <Knob
+                    label="Delay"
+                    unit={"ms"}
+                    min={0.1}
+                    max={3.0}
+                    step={0.01}
+                    value={multipathDelay}
+                    setValue={setMultipathDelay}
+                  />
+                  <Knob
+                    label="Ceiling"
+                    min={0.1}
+                    max={1.0}
+                    step={0.01}
+                    value={ceiling}
+                    setValue={setCeiling}
                   />
                 </div>
               </div>
@@ -185,6 +253,7 @@ export default function App() {
           </div>
         </Body>
       </Speaker>
+      {!licenseValid && <LicenseOverlay onActivated={() => setLicenseValid(true)} />}
     </div>
   );
 }
