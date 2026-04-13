@@ -29,28 +29,20 @@ export default function App() {
 
   const [bitDepth, setBitDepth] = useState(8);
   const [rate, setRate] = useState(5);
-  const [burstDrift, setBurstDrift] = useState(20);
-  const [depth, setDepth] = useState(25);
-  const [emphasis, setEmphasis] = useState(0.5);
-  const [multipathMix, setMultipathMix] = useState(0.3);
-  const [multipathDelay, setMultipathDelay] = useState(1.0);
-  const [ceiling, setCeiling] = useState(0.7);
+  const [depth, setDepth] = useState(0.01);
+  const [character, setCharacter] = useState(0.2);
   const [drive, setDrive] = useState(2.0);
-  const [mix, setMix] = useState(50);
+  const [mix, setMix] = useState(1);
 
   const loadPreset = (p) => {
     setSmooth(p.smooth);
     setRadio(p.radio);
     setBitDepth(p.bitDepth);
     setRate(p.rate);
-    setBurstDrift(p.burstDrift);
     setDepth(p.depth);
     setDrive(p.drive);
     setMix(p.mix);
-    setEmphasis(p.emphasis);
-    setMultipathMix(p.multipathMix);
-    setMultipathDelay(p.multipathDelay);
-    setCeiling(p.ceiling);
+    setCharacter(p.emphasis);
   };
 
   // Master
@@ -64,12 +56,9 @@ export default function App() {
 
   // Radio
   useEffect(() => { setParameter("radio",          radio);        }, [radio]);
-  useEffect(() => { setParameter("drift",          burstDrift);   }, [burstDrift]);
   useEffect(() => { setParameter("depth",          depth);        }, [depth]);
-  useEffect(() => { setParameter("emphasis",       emphasis);     }, [emphasis]);
-  useEffect(() => { setParameter("multipathMix",   multipathMix); }, [multipathMix]);
-  useEffect(() => { setParameter("multipathDelay", multipathDelay); }, [multipathDelay]);
-  useEffect(() => { setParameter("ceiling",        ceiling);      }, [ceiling]);
+  useEffect(() => { setParameter("character",       character);     }, [setCharacter]);
+  useEffect(() => { setParameter("sync",            sync);          }, [sync]);
 
   // External Input
   useEffect(() => { setParameter("useAudioInput",     externalAudio);     }, [externalAudio]);
@@ -159,55 +148,24 @@ export default function App() {
                 />
                 <div className={knobContainerStyles}>
                   <Knob
-                    label="Gate"
-                    unit={"%"}
-                    min={1}
-                    max={5000}
-                    step={1}
-                    value={burstDrift}
-                    setValue={setBurstDrift}
-                  />
-                  <Knob
                     label="Chaos"
                     unit={"%"}
                     min={0.01}
                     max={1}
                     step={0.01}
+                    presentationValueMultiplier={100}
                     value={depth}
                     setValue={setDepth}
                   />
                   <Knob
-                    label="Emphasis"
+                    label="Character"
+                    unit={"%"}
                     min={0}
                     max={1}
+                    presentationValueMultiplier={100}
                     step={0.01}
-                    value={emphasis}
-                    setValue={setEmphasis}
-                  />
-                  <Knob
-                    label="Multipath"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={multipathMix}
-                    setValue={setMultipathMix}
-                  />
-                  <Knob
-                    label="Delay"
-                    unit={"ms"}
-                    min={0.1}
-                    max={3.0}
-                    step={0.01}
-                    value={multipathDelay}
-                    setValue={setMultipathDelay}
-                  />
-                  <Knob
-                    label="Ceiling"
-                    min={0.1}
-                    max={1.0}
-                    step={0.01}
-                    value={ceiling}
-                    setValue={setCeiling}
+                    value={character}
+                    setValue={setCharacter}
                   />
                 </div>
               </div>
@@ -241,6 +199,7 @@ export default function App() {
                   <Knob
                     label="Mix"
                     unit={"%"}
+                    presentationValueMultiplier={100}
                     min={0.01}
                     max={1.0}
                     step={0.01}

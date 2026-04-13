@@ -38,17 +38,11 @@ AudioPluginAudioProcessor::createParameters()
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "depth", "depth", 0.0f,   100.0f,    25.0f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "emphasis",      "Emphasis",      0.0f, 1.0f,  0.5f));
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "multipathMix",  "Multipath Mix", 0.0f, 1.0f,  0.3f));
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "multipathDelay","Multipath Delay",0.1f, 3.0f, 1.0f));
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "ceiling",       "Ceiling",       0.1f, 1.0f,  0.7f));
-
+        "character",      "Character",      0.0f, 1.0f,  0.5f));
 
     // Master Knob
     params.push_back (std::make_unique<juce::AudioParameterBool> ("useAudioInput", "useAudioInput", false));
+    params.push_back (std::make_unique<juce::AudioParameterBool> ("sync", "Sync", false));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "drive",    "Drive",    1.0f,    10.0f,    2.0f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
@@ -97,7 +91,13 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     juce::ignoreUnused (samplesPerBlock);
 
     audioFilePlayer.prepare (sampleRate);
-    audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovis/CLionProjects/degrainator/music"));
+
+    // Mac Mini
+    // /Users/dovis/CLionProjects/degrainator/music
+
+    // Macbook air
+    // /Users/dovydas/CLionProjects/demo/music
+    audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovydas/CLionProjects/demo/music"));
 
     bitCrusher.prepare (sampleRate);
     bitCrusher.setFeedback (0.0f);
@@ -157,20 +157,19 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const bool  radio          = *apvts.getRawParameterValue ("radio");
     const float drift          = *apvts.getRawParameterValue ("drift");
     const float depth          = *apvts.getRawParameterValue ("depth");
-    const float emphasis       = *apvts.getRawParameterValue ("emphasis");
-    const float multipathMix   = *apvts.getRawParameterValue ("multipathMix");
-    const float multipathDelay = *apvts.getRawParameterValue ("multipathDelay");
-    const float ceiling        = *apvts.getRawParameterValue ("ceiling");
+    const float character      = *apvts.getRawParameterValue ("character");
+    const bool  sync           = *apvts.getRawParameterValue ("sync");
 
     bitCrusher.setBitRate (bitDepth);
     bitCrusher.setReductionFactor(sampleRateReduction);
     bitCrusher.setInterpolated(smooth);
     radioEffect.setTriangleDepth   (depth);
-    radioEffect.setEmphasis        (emphasis);
-    radioEffect.setMultipathMix    (multipathMix);
-    radioEffect.setMultipathDelay  (multipathDelay);
-    radioEffect.setLimiterCeiling  (ceiling);
-
+    radioEffect.setMultipathDelay  (3 * character);
+    radioEffect.setEmphasis        (character);
+    radioEffect.setMultipathMix    (character);
+    radioEffect.setLimiterCeiling  (character);
+    radioEffect.setTempoSyncHold   (sync);
+    radioEffect.setTempoSyncGate   (sync);
 
     // Temporary per-channel storage so we can level-match tanh after the block
     const int numChannels = std::min (totalNumOutputChannels, 2);

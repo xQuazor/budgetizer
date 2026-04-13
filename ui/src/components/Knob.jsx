@@ -11,6 +11,7 @@ export default function Knob({
   max = 1,
   step = 0.01,
   scale = 1,
+  presentationValueMultiplier = 1,
   value: externalValue,
   setValue: externalSetValue,
 }) {
@@ -126,7 +127,7 @@ export default function Knob({
       {/* Text overlay — value / range / label */}
       <div className="absolute inset-0 flex flex-col gap-[16px] items-start font-['Inter',sans-serif] font-normal text-[8px] text-[#ddd] leading-normal pointer-events-none">
         <p className="w-full text-center shrink-0">
-          {displayValue}
+          {(parseFloat(displayValue) * presentationValueMultiplier).toFixed(0)}
           {unit}
         </p>
         <div className="flex items-center justify-between w-[57px] shrink-0 whitespace-nowrap">

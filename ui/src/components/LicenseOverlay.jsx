@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 
 export default function LicenseOverlay({ onActivated }) {
-  const [keyInput, setKeyInput] = useState("");
+  const [keyInput, setKeyInput] = useState("ZW1haWw9Y3VzdG9tZXJAZ21haWwuY29tO3Byb2R1Y3Q9RGVncmFkaXplcg==:5f9d7f689bd5a58c33322f4d3274c246d99507a9f2194541fa9dbf6e0376a80af77f397eef3b94b8e66bf1ae21a3f1eff7a5575e56c9db7e6a0e7d2660f0a9da00626261acd3fc7d7daa2a09c74c1c999eaef5f172781911925b4fcee1424f06dd07b94dde41cf4374bd192eb7743dea33198a42257aac59aca02edf5dd6191e");
   const [error, setError] = useState(false);
 
   useEffect(() => {

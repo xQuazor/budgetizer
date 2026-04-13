@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #  /Users/dovydas/CLionProjects/JUCE
 
 add_subdirectory(
-        /Users/dovis/Documents/JUCE
+        /Users/dovydas/CLionProjects/JUCE
         ${CMAKE_BINARY_DIR}/JUCE
 )
 

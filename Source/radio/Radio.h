@@ -11,6 +11,8 @@
 class Radio
 {
 public:
+    enum class NoteDivision { Whole, Half, Quarter, Eighth, Sixteenth };
+
     void setSampleRate (double sampleRate);
     void setHoldAmount    (float amount);  // 0 = no hold, 1 = max hold
     void setHoldRate      (float hz);      // triangle LFO rate in Hz
@@ -25,6 +27,16 @@ public:
     void setMultipathMix     (float mix);      // 0-1, reflection strength
     void setMultipathDelay   (float ms);       // 0.1-3.0 ms
     void setLimiterCeiling   (float linear);   // 0.1-1.0
+
+    // Tempo sync
+    void setBpm               (float bpm);
+    void setTempoSyncHold     (bool enabled);
+    void setTempoSyncGate     (bool enabled);
+    void setHoldNoteDivision  (NoteDivision div);  // switches hold to note-division mode
+    void setGateNoteDivision  (NoteDivision div);  // switches gate to note-division mode
+    void setHoldCustomTimeMs  (float ms);          // switches hold to fixed-ms mode
+    void setGateCustomTimeMs  (float ms);          // switches gate to fixed-ms mode
+
     float processSample (float sample);
 
 private:
@@ -63,4 +75,20 @@ private:
     juce::Random  gateRng;
 
     float applyNoiseGate (float signal);
+
+    // Tempo sync
+    float        bpm             = 93.0f;
+    bool         tempoSyncHold   = true;
+    bool         tempoSyncGate   = true;
+    NoteDivision holdDivision    = NoteDivision::Half;
+    NoteDivision gateDivision    = NoteDivision::Half;
+    int          tempoHoldCounter = 0;
+
+    // Custom fixed-time mode (overrides note division when > 0)
+    float holdCustomMs  = 0.0f;
+    float gateCustomMs  = 0.0f;
+
+    int noteDivisionToSamples (NoteDivision div) const;
+    int holdIntervalSamples () const;   // respects custom-ms vs note-division
+    int gateIntervalSamples () const;
 };

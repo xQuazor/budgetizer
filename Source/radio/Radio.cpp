@@ -2,6 +2,7 @@
 
 void Radio::setSampleRate (double sr) {
     sampleRate = sr;
+    burstGen.setCurrentFrequency(200);
     noiseGen.prepare(sr);
     burstGen.prepare(sr);
     rateModulator.setSampleRate(sr);
@@ -51,6 +52,72 @@ void Radio::setTriangleDepth (float depth) {
     triangleDepth = std::clamp(depth, 0.0f, 1.0f);
 }
 
+void Radio::setBpm (float newBpm) {
+    bpm = std::max(newBpm, 1.0f);
+}
+
+void Radio::setTempoSyncHold (bool enabled) {
+    if (tempoSyncHold == enabled) return;
+    tempoSyncHold    = enabled;
+    tempoHoldCounter = holdIntervalSamples();
+}
+
+void Radio::setTempoSyncGate (bool enabled) {
+    if (tempoSyncGate == enabled) return;
+    tempoSyncGate = enabled;
+    gateCounter   = gateIntervalSamples();
+}
+
+void Radio::setHoldNoteDivision (NoteDivision div) {
+    holdDivision     = div;
+    holdCustomMs     = 0.0f;          // switch to note-division mode
+    tempoHoldCounter = holdIntervalSamples();
+}
+
+void Radio::setGateNoteDivision (NoteDivision div) {
+    gateDivision = div;
+    gateCustomMs = 0.0f;              // switch to note-division mode
+    gateCounter  = gateIntervalSamples();
+}
+
+void Radio::setHoldCustomTimeMs (float ms) {
+    holdCustomMs     = std::max(ms, 1.0f);
+    tempoHoldCounter = holdIntervalSamples();
+}
+
+void Radio::setGateCustomTimeMs (float ms) {
+    gateCustomMs = std::max(ms, 1.0f);
+    gateCounter  = gateIntervalSamples();
+}
+
+int Radio::holdIntervalSamples() const {
+    if (holdCustomMs > 0.0f)
+        return std::max(1, static_cast<int>(sampleRate * holdCustomMs / 1000.0));
+    return noteDivisionToSamples(holdDivision);
+}
+
+int Radio::gateIntervalSamples() const {
+    if (gateCustomMs > 0.0f)
+        return std::max(1, static_cast<int>(sampleRate * gateCustomMs / 1000.0));
+    return noteDivisionToSamples(gateDivision);
+}
+
+int Radio::noteDivisionToSamples (NoteDivision div) const
+{
+    double beatSeconds = 60.0 / bpm;
+    double noteSeconds;
+    switch (div)
+    {
+        case NoteDivision::Whole:      noteSeconds = beatSeconds * 4.0;  break;
+        case NoteDivision::Half:       noteSeconds = beatSeconds * 2.0;  break;
+        case NoteDivision::Quarter:    noteSeconds = beatSeconds;         break;
+        case NoteDivision::Eighth:     noteSeconds = beatSeconds * 0.5;  break;
+        case NoteDivision::Sixteenth:  noteSeconds = beatSeconds * 0.25; break;
+        default:                       noteSeconds = beatSeconds;         break;
+    }
+    return std::max(1, static_cast<int>(sampleRate * noteSeconds));
+}
+
 void Radio::setEmphasis (float amount)      { preEmphasis.setAmount(amount); }
 void Radio::setMultipathMix (float mix)     { multipath.setMix(mix); }
 void Radio::setMultipathDelay (float ms)    { multipath.setBaseDelay(ms); }
@@ -59,13 +126,19 @@ void Radio::setLimiterCeiling (float lin)   { limiter.setThreshold(lin); }
 // Periodically cuts the signal and replaces it with noise.
 // dropoutAmount controls how frequent and how long the dropouts are.
 // When gateOpen: pass signal through. When closed: emit noise.
+// When tempoSyncGate is true, both open and closed durations snap to
+// noteDivisionToSamples(gateDivision) with no random variation.
 float Radio::applyNoiseGate (float signal)
 {
     if (--gateCounter <= 0)
     {
         gateOpen = !gateOpen;
 
-        if (gateOpen)
+        if (tempoSyncGate)
+        {
+            gateCounter = gateIntervalSamples();
+        }
+        else if (gateOpen)
         {
             // Open duration: long gap between dropouts; shorter at higher dropoutAmount
             int maxOpen = static_cast<int>(sampleRate * 2.0f);    // up to 2 s
@@ -90,8 +163,20 @@ float Radio::applyNoiseGate (float signal)
 
 // Triangle LFO: phase advances 0→1 per cycle.
 // ComplexLFO modulates the instantaneous rate around the base, making cycle lengths uneven.
+// When tempoSyncHold is true, a simple sample counter replaces the LFO; the hold toggles
+// on/off every noteDivisionToSamples(holdDivision) samples with no random modulation.
 void Radio::tickTriangleLFO()
 {
+    if (tempoSyncHold)
+    {
+        if (--tempoHoldCounter <= 0)
+        {
+            isHolding        = !isHolding && (holdAmount > 0.0f);
+            tempoHoldCounter = holdIntervalSamples();
+        }
+        return;
+    }
+
     // returnModulation() outputs ~-1..1; scale to ±50% of base rate
     float mod = rateModulator.returnModulation();
     float effectiveRate = triangleRate * (1.f + 1.0f * mod);

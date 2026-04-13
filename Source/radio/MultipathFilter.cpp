@@ -39,5 +39,9 @@ float MultipathFilter::processSample(float x)
     buffer[writePos] = x;
     writePos = (writePos + 1) & (kBufSize - 1);
 
-    return x + mix * delayed;
+    float finalMix = 0.5;
+
+    if (mix > finalMix) finalMix = mix;
+
+    return x + finalMix * delayed;
 }

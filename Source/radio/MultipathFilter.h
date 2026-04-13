@@ -18,7 +18,7 @@ private:
     double sampleRate        = 44100.0;
 
     float mix         = 0.3f;
-    float baseDelayMs = 1.0f;
+    float baseDelayMs = 2.5f;
 
     // Internal LFO — slow wobble of the delay time
     float lfoPhase = 0.f;
