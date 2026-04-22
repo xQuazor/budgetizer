@@ -11,7 +11,8 @@ import Antenna from "./components/Antenna.jsx";
 import {Body} from "./components/Body.jsx";
 import {Speaker} from "./components/Speaker.jsx";
 import SpeakerLeg from "./components/SpeakerLeg.jsx";
-
+import noise from "./assets/noise.png"
+import studioBackground from "./assets/Studio Background.jpg"
 export default function App() {
   const containerRef = useRef(null);
 
@@ -21,11 +22,12 @@ export default function App() {
     return onLicenseStatus((status) => setLicenseValid(status.valid));
   }, []);
 
+  const [bypass, setBypass] = useState(false);
   const [smooth, setSmooth] = useState(false);
   const [radio, setRadio] = useState(true);
   const [sync, setSync] = useState(false);
 
-  const [externalAudio, setExternalAudio] = useState(false);
+  const [externalAudio, setExternalAudio] = useState(true);
 
   const [bitDepth, setBitDepth] = useState(8);
   const [rate, setRate] = useState(5);
@@ -44,6 +46,9 @@ export default function App() {
     setMix(p.mix);
     setCharacter(p.emphasis);
   };
+
+  // Bypass
+  useEffect(() => { setParameter("bypass", bypass); }, [bypass]);
 
   // Master
   useEffect(() => { setParameter("masterMix",     mix);     }, [mix]);
@@ -94,9 +99,11 @@ export default function App() {
     "flex flex-col items-center justify-center gap-2 w-fit";
 
   return (
-    <div key={"ApplicationContainer"} ref={containerRef} className={"w-fit h-fit"} style={{ position: "relative", display: "flex", flexDirection: "column" }}>
-      <Toolbar presets={PRESETS} onPresetLoad={loadPreset} />
-      <Speaker className={"relative py-2 flex flex-col gap w-fit pt-14 pb-4 mx-4 h-fit"}
+    <div key={"ApplicationContainer"} ref={containerRef} className={"w-fit h-fit relative flex flex-col"}>
+      <img src={noise} alt={"noise texture"} className={"absolute mix-blend-overlay w-full h-full z-50 pointer-events-none opacity-50"}/>
+      <img src={studioBackground} alt={"studio background"} className={"absolute left-0 right-0 bottom-0 top-8.25 w-full h-[calc(100%-2.0625rem)] object-fill pointer-events-none"} />
+      <Toolbar presets={PRESETS} onPresetLoad={loadPreset} bypass={bypass} onBypassToggle={() => setBypass((v) => !v)} />
+      <Speaker className={"relative py-2 flex flex-col gap w-fit pt-16 pb-4 mx-4 h-fit scale-100"}
       >
         <Antenna className={"-top-18"}/>
         <div className={"absolute flex flex-row w-full bottom-2.75 px-16 justify-between"}>
@@ -181,11 +188,11 @@ export default function App() {
                   value={sync}
                   onClick={() => setSync((v) => !v)}
                 />
-                <ModeButton
-                    label="External Audio"
-                    value={externalAudio}
-                    onClick={() => setExternalAudio((v) => !v)}
-                />
+                {/*<ModeButton*/}
+                {/*    label="External Audio"*/}
+                {/*    value={externalAudio}*/}
+                {/*    onClick={() => setExternalAudio((v) => !v)}*/}
+                {/*/>*/}
                 <div className={knobContainerStyles}>
                     <Knob
                         label="Drive"

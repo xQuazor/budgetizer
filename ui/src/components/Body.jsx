@@ -5,7 +5,7 @@ export const Body = ({ children }) => {
   return (
     <div
       key={"Back Layer"}
-      className={"relative w-fit p-2 bg-[#A7DCFF] rounded-[60px] h-fit"}
+      className={"relative w-fit p-2 bg-[#A7DCFF] rounded-[60px] h-fit shadow-md"}
       style={{ boxShadow: "inset 4px -4px 4px 0px rgba(0,0,0,0.25)" }}
     >
       <div className="absolute inset-0 rounded-[60px] border border-[rgba(110,110,110,0.5)] mix-blend-overlay pointer-events-none" />
@@ -44,7 +44,7 @@ export const Body = ({ children }) => {
         />
         <div
           key={"Front Layer"}
-          className={`relative w-fit rounded-[50px] bg-[#7AA9CC]`}
+          className={`relative w-fit rounded-[50px] bg-[#7AA9CC] shadow-2xl`}
         >
           <div className="absolute inset-0 rounded-[48px] border border-[rgba(255,255,255,0.35)] mix-blend-overlay pointer-events-none" />
           <div

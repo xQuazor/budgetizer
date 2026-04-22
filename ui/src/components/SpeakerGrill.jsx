@@ -25,7 +25,7 @@ export default function SpeakerGrill() {
                     {row.map((cell, ci) => (
                         <div
                             key={ci}
-                            className="block w-2.5 h-2.5 shrink-0 rounded-full"
+                            className="block w-2 h-2 shrink-0 rounded-full"
                             style={cell === 'd' || cell === 's' ? {
                                 background: "#677077",
                                 boxShadow: "-1px -1px 0.5px 0 #9EA8B0 inset, 2px 5px 7.1px 1px #1E1E1E inset",
