@@ -12,6 +12,7 @@ export default function Knob({
   step = 0.01,
   scale = 1,
   presentationValueMultiplier = 1,
+  labels,
   value: externalValue,
   setValue: externalSetValue,
 }) {
@@ -54,7 +55,11 @@ export default function Knob({
   );
 
   const rotation = ((value - min) / (max - min)) * 180 - 90;
-  const displayValue = step >= 1 ? Math.round(value) : value.toFixed(2);
+  const displayValue = labels
+    ? labels[Math.round(value - min)]
+    : step >= 1
+      ? Math.round(value)
+      : value.toFixed(2);
 
   return (
     <div
@@ -127,8 +132,9 @@ export default function Knob({
       {/* Text overlay — value / range / label */}
       <div className="absolute inset-0 flex flex-col gap-[16px] items-start font-['Inter',sans-serif] font-normal text-[8px] text-[#ddd] leading-normal pointer-events-none">
         <p className="w-full text-center shrink-0">
-          {(parseFloat(displayValue) * presentationValueMultiplier).toFixed(0)}
-          {unit}
+          {labels
+            ? displayValue
+            : (parseFloat(displayValue) * presentationValueMultiplier).toFixed(0) + unit}
         </p>
         <div className="flex items-center justify-between w-[57px] shrink-0 whitespace-nowrap">
           <span>-</span>

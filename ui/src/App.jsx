@@ -31,8 +31,8 @@ export default function App() {
 
   const [bitDepth, setBitDepth] = useState(8);
   const [rate, setRate] = useState(5);
-  const [depth, setDepth] = useState(0.01);
-  const [character, setCharacter] = useState(0.2);
+  const [depth, setDepth] = useState(0.0);
+  const [interval, setInterval] = useState(2);
   const [drive, setDrive] = useState(2.0);
   const [mix, setMix] = useState(1);
 
@@ -44,7 +44,7 @@ export default function App() {
     setDepth(p.depth);
     setDrive(p.drive);
     setMix(p.mix);
-    setCharacter(p.emphasis);
+    setInterval(p.interval ?? 2);
   };
 
   // Bypass
@@ -62,7 +62,7 @@ export default function App() {
   // Radio
   useEffect(() => { setParameter("radio",          radio);        }, [radio]);
   useEffect(() => { setParameter("depth",          depth);        }, [depth]);
-  useEffect(() => { setParameter("character",       character);     }, [setCharacter]);
+  useEffect(() => { setParameter("interval",         interval);      }, [interval]);
   useEffect(() => { setParameter("sync",            sync);          }, [sync]);
 
   // External Input
@@ -157,7 +157,7 @@ export default function App() {
                   <Knob
                     label="Chaos"
                     unit={"%"}
-                    min={0.01}
+                    min={0.0}
                     max={1}
                     step={0.01}
                     presentationValueMultiplier={100}
@@ -165,14 +165,13 @@ export default function App() {
                     setValue={setDepth}
                   />
                   <Knob
-                    label="Character"
-                    unit={"%"}
+                    label="Interval"
                     min={0}
-                    max={1}
-                    presentationValueMultiplier={100}
-                    step={0.01}
-                    value={character}
-                    setValue={setCharacter}
+                    max={4}
+                    step={1}
+                    labels={["1/16","1/8","1/4","1/2","1/1"]}
+                    value={interval}
+                    setValue={setInterval}
                   />
                 </div>
               </div>

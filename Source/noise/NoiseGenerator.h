@@ -10,6 +10,6 @@ public:
 
 private:
     juce::Random rng;
-    float noiseLevel  = 0.5f;
+    float noiseLevel  = 0.25f;
     float brownAccum  = 0.0f;
 };

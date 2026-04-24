@@ -38,7 +38,7 @@ AudioPluginAudioProcessor::createParameters()
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "depth", "depth", 0.0f,   100.0f,    25.0f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "character",      "Character",      0.0f, 1.0f,  0.5f));
+        "interval",       "Interval",       0.0f, 4.0f,  2.0f));
 
     // Master Knob
     params.push_back (std::make_unique<juce::AudioParameterBool> ("useAudioInput", "useAudioInput", false));
@@ -97,7 +97,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 
     // Macbook air
     // /Users/dovydas/CLionProjects/demo/music
-    audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovydas/CLionProjects/demo/music"));
+    audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovis/CLionProjects/degrainator/music"));
 
     bitCrusher.prepare (sampleRate);
     bitCrusher.setFeedback (0.0f);
@@ -153,21 +153,39 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const float masterMix    = *apvts.getRawParameterValue ("masterMix");
     const bool useAudioInput = *apvts.getRawParameterValue ("useAudioInput");
 
+    if (auto* playHead = getPlayHead())
+        if (auto pos = playHead->getPosition())
+            if (auto bpm = pos->getBpm())
+                radioEffect.setBpm (static_cast<float> (*bpm));
+
     //Radio Chain
     const bool  radio          = *apvts.getRawParameterValue ("radio");
     const float drift          = *apvts.getRawParameterValue ("drift");
     const float depth          = *apvts.getRawParameterValue ("depth");
-    const float character      = *apvts.getRawParameterValue ("character");
+    const float interval       = *apvts.getRawParameterValue ("interval");
     const bool  sync           = *apvts.getRawParameterValue ("sync");
+
+    static const Radio::NoteDivision kDivisions[5] = {
+        Radio::NoteDivision::Sixteenth,
+        Radio::NoteDivision::Eighth,
+        Radio::NoteDivision::Quarter,
+        Radio::NoteDivision::Half,
+        Radio::NoteDivision::Whole,
+    };
+    const int divIndex = std::clamp (static_cast<int>(std::round(interval)), 0, 4);
 
     bitCrusher.setBitRate (bitDepth);
     bitCrusher.setReductionFactor(sampleRateReduction);
     bitCrusher.setInterpolated(smooth);
     radioEffect.setTriangleDepth   (depth);
-    radioEffect.setMultipathDelay  (3 * character);
-    radioEffect.setEmphasis        (character);
-    radioEffect.setMultipathMix    (character);
-    radioEffect.setLimiterCeiling  (character);
+    radioEffect.setNoiseLevel      (depth);
+    radioEffect.setDropoutAmount   (depth);
+    radioEffect.setMultipathDelay  (3.0f);
+    radioEffect.setEmphasis        (1.0f);
+    radioEffect.setMultipathMix    (1.0f);
+    radioEffect.setLimiterCeiling  (1.0f);
+    radioEffect.setHoldNoteDivision(kDivisions[divIndex]);
+    radioEffect.setGateNoteDivision(kDivisions[divIndex]);
     radioEffect.setTempoSyncHold   (sync);
     radioEffect.setTempoSyncGate   (sync);
 
