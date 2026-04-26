@@ -27,7 +27,7 @@ export default function App() {
   const [radio, setRadio] = useState(true);
   const [sync, setSync] = useState(false);
 
-  const [externalAudio, setExternalAudio] = useState(true);
+  const [externalAudio, setExternalAudio] = useState(false);
 
   const [bitDepth, setBitDepth] = useState(8);
   const [rate, setRate] = useState(5);
@@ -100,10 +100,10 @@ export default function App() {
 
   return (
     <div key={"ApplicationContainer"} ref={containerRef} className={"w-fit h-fit relative flex flex-col"}>
-      <img src={noise} alt={"noise texture"} className={"absolute mix-blend-overlay w-full h-full z-50 pointer-events-none opacity-50"}/>
-      <img src={studioBackground} alt={"studio background"} className={"absolute left-0 right-0 bottom-0 top-8.25 w-full h-[calc(100%-2.0625rem)] object-fill pointer-events-none"} />
+      <img src={noise} alt={"noise texture"} className={`absolute mix-blend-overlay w-full h-full z-50 pointer-events-none opacity-100 ${licenseValid ? "" : "blur-xs"}`}/>
+      <img src={studioBackground} alt={"studio background"} className={`absolute left-0 right-0 bottom-0 top-8.25 w-full h-[calc(100%-2.0625rem)] object-fill pointer-events-none ${licenseValid ? "" : "blur-xs"}`} />
       <Toolbar presets={PRESETS} onPresetLoad={loadPreset} bypass={bypass} onBypassToggle={() => setBypass((v) => !v)} />
-      <Speaker className={"relative py-2 flex flex-col gap w-fit pt-16 pb-4 mx-4 h-fit scale-100"}
+      <Speaker className={`relative py-2 flex flex-col gap w-fit pt-16 pb-4 mx-4 h-fit scale-100 ${licenseValid ? "" : "blur-xs"}`}
       >
         <Antenna className={"-top-18"}/>
         <div className={"absolute flex flex-row w-full bottom-2.75 px-16 justify-between"}>
@@ -114,8 +114,9 @@ export default function App() {
           <div className={"flex flex-col gap-4 p-6 w-fit"}>
             <BrandingText />
             <div className={"flex flex-row gap-4"}>
-              <div className={settingContainerStyles} key={"SettingContainer"}>
+              <div className={`${settingContainerStyles}`} key={"SettingContainer"}>
                 <div
+                    className={`${smooth? "bg-black" : "bg-transparent"}`}
                   style={containerBorderStyle}
                 />
                 <ModeButton

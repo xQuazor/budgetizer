@@ -25,6 +25,7 @@ AudioPluginAudioProcessor::createParameters()
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
     // Bit Crusher Layout
+    params.push_back (std::make_unique<juce::AudioParameterBool> ("bypass", "Bypass", false));
     params.push_back (std::make_unique<juce::AudioParameterBool> ("smooth", "Smooth", false));
     params.push_back (std::make_unique<juce::AudioParameterBool> ("radio", "Radio", false));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
@@ -137,6 +138,9 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         buffer.clear();
         return;
     }
+
+    if (*apvts.getRawParameterValue ("bypass"))
+        return;
 
     juce::ScopedNoDenormals noDenormals;
 

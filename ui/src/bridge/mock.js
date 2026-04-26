@@ -1,6 +1,7 @@
 // Mock bridge for browser development (no JUCE runtime)
 
 const listeners = new Map();
+const licenseListeners = new Set();
 const mockState = {
     bitDepth: 8,
     reductionFactor: 4,
@@ -27,4 +28,15 @@ export function onParameterChange(paramId, callback) {
 
 export function getParameterValue(paramId) {
     return mockState[paramId];
+}
+
+export function submitLicense(_key) {
+    setTimeout(() => {
+        licenseListeners.forEach(cb => cb({ valid: false }));
+    }, 400);
+}
+
+export function onLicenseStatus(callback) {
+    licenseListeners.add(callback);
+    return () => licenseListeners.delete(callback);
 }
