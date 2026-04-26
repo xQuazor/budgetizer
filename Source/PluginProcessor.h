@@ -61,5 +61,10 @@ private:
     Radio                  radioEffect;
     Chorus                 chorus;
 
+    PitchModulator         wobblePitchL;
+    PitchModulator         wobblePitchR;
+    float                  wobblePitchPhase = 0.0f;
+    float                  wobbleVolPhase   = 0.0f;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

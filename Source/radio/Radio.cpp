@@ -40,6 +40,10 @@ void Radio::setDropoutAmount (float amount) {
     dropoutAmount = amount < 0.0f ? 0.0f : (amount > 1.0f ? 1.0f : amount);
 }
 
+void Radio::setGateEnabled (bool enabled) {
+    gateEnabled = enabled;
+}
+
 void Radio::setNoiseLevel (float level) {
     noiseGen.setLevel(level);
 }
@@ -69,24 +73,30 @@ void Radio::setTempoSyncGate (bool enabled) {
 }
 
 void Radio::setHoldNoteDivision (NoteDivision div) {
+    if (holdDivision == div && holdCustomMs == 0.0f) return;
     holdDivision     = div;
-    holdCustomMs     = 0.0f;          // switch to note-division mode
+    holdCustomMs     = 0.0f;
     tempoHoldCounter = holdIntervalSamples();
 }
 
 void Radio::setGateNoteDivision (NoteDivision div) {
+    if (gateDivision == div && gateCustomMs == 0.0f) return;
     gateDivision = div;
-    gateCustomMs = 0.0f;              // switch to note-division mode
+    gateCustomMs = 0.0f;
     gateCounter  = gateIntervalSamples();
 }
 
 void Radio::setHoldCustomTimeMs (float ms) {
-    holdCustomMs     = std::max(ms, 1.0f);
+    ms = std::max(ms, 1.0f);
+    if (holdCustomMs == ms) return;
+    holdCustomMs     = ms;
     tempoHoldCounter = holdIntervalSamples();
 }
 
 void Radio::setGateCustomTimeMs (float ms) {
-    gateCustomMs = std::max(ms, 1.0f);
+    ms = std::max(ms, 1.0f);
+    if (gateCustomMs == ms) return;
+    gateCustomMs = ms;
     gateCounter  = gateIntervalSamples();
 }
 
@@ -134,7 +144,7 @@ float Radio::applyNoiseGate (float signal)
     {
         gateOpen = !gateOpen;
 
-        if (tempoSyncGate)
+        if (tempoSyncGate || gateCustomMs > 0.0f)
         {
             gateCounter = gateIntervalSamples();
         }
@@ -177,9 +187,15 @@ void Radio::tickTriangleLFO()
         return;
     }
 
-    // returnModulation() outputs ~-1..1; scale to ±50% of base rate
+    // When a custom ms interval is set, derive the LFO rate from it so the
+    // Interval knob controls speed while Chaos (triangleDepth) still controls
+    // how much of each cycle the hold is active.
+    float rate = (holdCustomMs > 0.0f)
+        ? 1000.0f / (2.0f * holdCustomMs)
+        : triangleRate;
+
     float mod = rateModulator.returnModulation();
-    float effectiveRate = triangleRate * (1.f + 1.0f * mod);
+    float effectiveRate = rate * (1.f + 1.0f * mod);
     if (effectiveRate < 0.01f) effectiveRate = 0.01f;
 
     trianglePhase += effectiveRate / static_cast<float>(sampleRate);
@@ -223,7 +239,7 @@ float Radio::processSample(float sample) {
     sig = multipath.processSample(sig);
     sig = formantShifter.processSample(sig);
     sig = limiter.processSample(sig);
-    sig = applyNoiseGate(sig);
+    if (gateEnabled) sig = applyNoiseGate(sig);
 
     return sig;
 }

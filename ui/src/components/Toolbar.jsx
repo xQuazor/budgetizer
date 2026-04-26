@@ -2,7 +2,7 @@ import { useState } from "react";
 import "./toolbar.css";
 import lcdTexture from "../assets/lcd-texture.png";
 import ModeButton from "@/components/ModeButton.jsx";
-export default function Toolbar({ presets, onPresetLoad, bypass, onBypassToggle }) {
+export default function Toolbar({ presets, onPresetLoad, bypass, onBypassToggle, sync, onSyncToggle, radio, onRadioToggle }) {
   const [selected, setSelected] = useState("");
 
   const handleChange = (e) => {
@@ -60,12 +60,60 @@ export default function Toolbar({ presets, onPresetLoad, bypass, onBypassToggle 
           ))}
         </select>
       </div>
-      <div className={"flex flex-row gap-2"}>
-        <div className={"relative w-12 h-5 rounded overflow-hidden"}>
+      <div className={"flex flex-row gap-2 items-center"}>
+        <div className={"relative w-6 h-4 rounded overflow-hidden"}>
           <p
-            className={"glowText text-[9px] absolute z-20 top-0.75 right-1.5"}
+            className={`${radio ? "glowText" : "glowTextBlack"} text-[8px] absolute z-30 top-0.5 right-1.75`}
             style={{
-              color: bypass ? "#3a4f62" : "#87ACC8",
+              color: radio ? "#132C44" : "#87ACC8",
+              transition: "color 0.25s ease",
+            }}
+          >
+            FM
+          </p>
+          <img
+            src={lcdTexture}
+            alt={"lcd text"}
+            className={"z-10 absolute w-full h-full opacity-20 mix-blend-multiply pointer-events-none"}
+          />
+          <div
+            className={"rounded w-14 h-5 absolute z-0"}
+            style={{
+              backgroundColor: radio ? "#5A6FA8" : "#2F3767",
+              transition: "background-color 0.25s ease",
+            }}
+          />
+        </div>
+        <ModeButton label="" value={radio} onClick={onRadioToggle} />
+        <div className={"relative w-9 h-4 rounded overflow-hidden"}>
+          <p
+            className={`${sync ? "glowText" : "glowTextBlack"} text-[8px] absolute z-30 top-0.5 right-1.75`}
+            style={{
+              color: sync ? "#132C44" : "#87ACC8",
+              transition: "color 0.25s ease",
+            }}
+          >
+            SYNC
+          </p>
+          <img
+            src={lcdTexture}
+            alt={"lcd text"}
+            className={"z-10 absolute w-full h-full opacity-20 mix-blend-multiply pointer-events-none"}
+          />
+          <div
+            className={"rounded w-14 h-5 absolute z-0"}
+            style={{
+              backgroundColor: sync ? "#5A6FA8" : "#2F3767",
+              transition: "background-color 0.25s ease",
+            }}
+          />
+        </div>
+        <ModeButton label="" value={sync} onClick={onSyncToggle} />
+        <div className={"relative w-11 h-4 rounded overflow-hidden"}>
+          <p
+            className={`${bypass ? "glowText" : "glowTextBlack"} text-[8px] absolute z-20 top-0.5 right-1.5`}
+            style={{
+              color: bypass ? "#132C44" : "#87ACC8",
               transition: "color 0.25s ease",
             }}
           >
@@ -79,7 +127,7 @@ export default function Toolbar({ presets, onPresetLoad, bypass, onBypassToggle 
               }
           />
           <div
-            className={"rounded w-14 h-5.5 absolute z-0"}
+            className={"rounded w-14 h-5 absolute z-0"}
             style={{
               backgroundColor: bypass ? "#5A6FA8" : "#2F3767",
               transition: "background-color 0.25s ease",

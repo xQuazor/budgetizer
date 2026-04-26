@@ -20,6 +20,7 @@ public:
     void setPitchRatio    (float ratio);   // 0.5 = -1 oct, 1.0 = no shift, 2.0 = +1 oct
     void setPitchMode     (PitchShifter::Mode m);
     void setDropoutAmount (float amount);  // 0 = no dropouts, 1 = frequent
+    void setGateEnabled   (bool enabled);
     void setNoiseLevel    (float level);   // noise amplitude during dropouts
     void setCurrentFrequency (float frequency);
     void setTriangleDepth    (float triangleDepth);
@@ -70,6 +71,7 @@ private:
 
     // Noise gate
     float         dropoutAmount = 0.5f;
+    bool          gateEnabled   = false;
     bool          gateOpen      = true;
     int           gateCounter   = 0;
     juce::Random  gateRng;

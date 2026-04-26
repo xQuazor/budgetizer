@@ -14,5 +14,5 @@ float NoiseGenerator::process()
     // Dividing by 1.02 keeps the DC gain at 1 and bounds the output to ~±1.
     brownAccum = (brownAccum + 0.02f * white) / 1.02f;
     // Scale up to compensate for the low RMS of brown noise relative to its peak.
-    return brownAccum * 3.5f * noiseLevel;
+    return brownAccum * 1.0f * noiseLevel;
 }
