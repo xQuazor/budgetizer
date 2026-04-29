@@ -61,35 +61,11 @@ export default function Toolbar({ presets, onPresetLoad, bypass, onBypassToggle,
         </select>
       </div>
       <div className={"flex flex-row gap-2 items-center"}>
-        <div className={"relative w-6 h-4 rounded overflow-hidden"}>
-          <p
-            className={`${radio ? "glowText" : "glowTextBlack"} text-[8px] absolute z-30 top-0.5 right-1.75`}
-            style={{
-              color: radio ? "#132C44" : "#87ACC8",
-              transition: "color 0.25s ease",
-            }}
-          >
-            FM
-          </p>
-          <img
-            src={lcdTexture}
-            alt={"lcd text"}
-            className={"z-10 absolute w-full h-full opacity-20 mix-blend-multiply pointer-events-none"}
-          />
-          <div
-            className={"rounded w-14 h-5 absolute z-0"}
-            style={{
-              backgroundColor: radio ? "#5A6FA8" : "#2F3767",
-              transition: "background-color 0.25s ease",
-            }}
-          />
-        </div>
-        <ModeButton label="" value={radio} onClick={onRadioToggle} />
         <div className={"relative w-9 h-4 rounded overflow-hidden"}>
           <p
             className={`${sync ? "glowText" : "glowTextBlack"} text-[8px] absolute z-30 top-0.5 right-1.75`}
             style={{
-              color: sync ? "#132C44" : "#87ACC8",
+              color: sync ? "#001B35" : "#87ACC8",
               transition: "color 0.25s ease",
             }}
           >
@@ -113,7 +89,7 @@ export default function Toolbar({ presets, onPresetLoad, bypass, onBypassToggle,
           <p
             className={`${bypass ? "glowText" : "glowTextBlack"} text-[8px] absolute z-20 top-0.5 right-1.5`}
             style={{
-              color: bypass ? "#132C44" : "#87ACC8",
+              color: bypass ? "#001B35" : "#87ACC8",
               transition: "color 0.25s ease",
             }}
           >

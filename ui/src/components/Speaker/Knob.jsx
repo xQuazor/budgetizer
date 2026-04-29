@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { setParameter, onParameterChange } from "../bridge";
+import { setParameter, onParameterChange } from "../../bridge/index.js";
 const imgEllipse34 =
   "https://www.figma.com/api/mcp/asset/04bcb213-706a-4c16-a8b1-eab4f087e7f9";
 
@@ -13,6 +13,7 @@ export default function Knob({
   scale = 1,
   presentationValueMultiplier = 1,
   labels,
+  zeroLabel,
   value: externalValue,
   setValue: externalSetValue,
 }) {
@@ -28,12 +29,18 @@ export default function Knob({
     (e) => {
       if (!isDragging.current) return;
       const delta = ((startY.current - e.clientY) * (max - min)) / 200;
-      const clamped = Math.min(max, Math.max(min, startValue.current + delta));
-      const snapped = Math.round(clamped / step) * step;
+      const raw = startValue.current + delta;
+      let snapped;
+      if (zeroLabel !== undefined && raw < min) {
+        snapped = raw < min / 2 ? 0 : min;
+      } else {
+        const clamped = Math.min(max, Math.max(min, raw));
+        snapped = Math.round(clamped / step) * step;
+      }
       setValue(snapped);
       setParameter(paramId, snapped);
     },
-    [paramId, min, max, step],
+    [paramId, min, max, step, zeroLabel],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -54,7 +61,9 @@ export default function Knob({
     [value, handleMouseMove, handleMouseUp],
   );
 
-  const rotation = ((value - min) / (max - min)) * 180 - 90;
+  const rotation = (zeroLabel !== undefined && value === 0)
+    ? -90
+    : ((value - min) / (max - min)) * 180 - 90;
   const displayValue = labels
     ? labels[Math.round(value - min)]
     : step >= 1
@@ -132,9 +141,11 @@ export default function Knob({
       {/* Text overlay — value / range / label */}
       <div className="absolute inset-0 flex flex-col gap-[16px] items-start font-['Inter',sans-serif] font-normal text-[8px] text-[#ddd] leading-normal pointer-events-none">
         <p className="w-full text-center shrink-0">
-          {labels
-            ? displayValue
-            : (parseFloat(displayValue) * presentationValueMultiplier).toFixed(0) + unit}
+          {zeroLabel && value === 0
+            ? zeroLabel
+            : labels
+              ? displayValue
+              : (parseFloat(displayValue) * presentationValueMultiplier).toFixed(0) + unit}
         </p>
         <div className="flex items-center justify-between w-[57px] shrink-0 whitespace-nowrap">
           <span>-</span>

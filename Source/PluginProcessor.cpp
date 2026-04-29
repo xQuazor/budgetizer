@@ -39,7 +39,7 @@ AudioPluginAudioProcessor::createParameters()
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "drift", "drift", 0.0f,   2500.0f,    500.0f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        "depth", "depth", 0.0f,   100.0f,    25.0f));
+        "chaos", "chaos", 0.0f,   100.0f,    25.0f));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         "interval",       "Interval",       0.0f, 2000.0f,  500.0f));
 
@@ -100,7 +100,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 
     // Macbook air
     // /Users/dovydas/CLionProjects/demo/music
-    audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovydas/CLionProjects/demo/music"));
+    audioFilePlayer.loadFromDirectory (juce::File ("/Users/dovis/CLionProjects/degrainator/music"));
 
     bitCrusher.prepare (sampleRate);
     bitCrusher.setFeedback (0.0f);
@@ -172,7 +172,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //Radio Chain
     const bool  radio          = *apvts.getRawParameterValue ("radio");
     const float drift          = *apvts.getRawParameterValue ("drift");
-    const float depth          = *apvts.getRawParameterValue ("depth");
+    const float chaos          = *apvts.getRawParameterValue ("chaos");
     const float interval       = *apvts.getRawParameterValue ("interval");
     const bool  sync           = *apvts.getRawParameterValue ("sync");
     const bool  noiseEnabled   = *apvts.getRawParameterValue ("noise");
@@ -181,9 +181,9 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     bitCrusher.setBitRate (bitDepth);
     bitCrusher.setReductionFactor(sampleRateReduction);
     bitCrusher.setInterpolated(smooth);
-    radioEffect.setTriangleDepth   (depth);
-    radioEffect.setNoiseLevel      (noiseEnabled ? depth : 0.0f);
-    radioEffect.setDropoutAmount   (depth);
+    radioEffect.setTriangleDepth   (chaos);
+    radioEffect.setNoiseLevel      (0.5f);
+    radioEffect.setDropoutAmount   (chaos);
     radioEffect.setMultipathDelay  (3.0f);
     radioEffect.setEmphasis        (1.0f);
     radioEffect.setMultipathMix    (1.0f);
