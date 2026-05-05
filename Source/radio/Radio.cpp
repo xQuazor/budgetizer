@@ -1,103 +1,102 @@
 #include "Radio.h"
 
-void Radio::setSampleRate (double sr) {
+void Radio::setSampleRate(double sr) {
     sampleRate = sr;
-    burstGen.setCurrentFrequency(200);
     noiseGen.prepare(sr);
     burstGen.prepare(sr);
     rateModulator.setSampleRate(sr);
-    rateModulator.setRateSlow   (0.07f);
-    rateModulator.setRateMedium (0.23f);
-    rateModulator.setRateFast   (0.61f);
     formantShifter.setSampleRate(sr);
     pitchShifter.setSampleRate(sr);
-    preEmphasis.prepare(sr);
-    multipath.prepare(sr);
     limiter.prepare(sr);
+
+    burstGen.setCurrentFrequency(500.0f);
+    rateModulator.setRateSlow(0.07f);
+    rateModulator.setRateMedium(0.23f);
+    rateModulator.setRateFast(0.61f);
 }
 
-void Radio::setHoldAmount (float amount) {
+void Radio::setHoldAmount(float amount) {
     holdAmount = std::clamp(amount, 0.0f, 1.0f);
 }
 
-void Radio::setHoldRate (float hz) {
+void Radio::setHoldRate(float hz) {
     triangleRate = std::max(hz, 0.01f);
 }
 
-void Radio::setFormantShift (float amount) {
+void Radio::setFormantShift(float amount) {
     formantShifter.setShiftAmount(amount);
 }
 
-void Radio::setPitchRatio (float r) {
+void Radio::setPitchRatio(float r) {
     pitchShifter.setRatio(r);
 }
 
-void Radio::setPitchMode (PitchShifter::Mode m) {
+void Radio::setPitchMode(PitchShifter::Mode m) {
     pitchShifter.setMode(m);
 }
 
-void Radio::setDropoutAmount (float amount) {
+void Radio::setDropoutAmount(float amount) {
     dropoutAmount = amount < 0.0f ? 0.0f : (amount > 1.0f ? 1.0f : amount);
 }
 
-void Radio::setGateEnabled (bool enabled) {
+void Radio::setGateEnabled(bool enabled) {
     gateEnabled = enabled;
 }
 
-void Radio::setNoiseLevel (float level) {
+void Radio::setNoiseLevel(float level) {
     noiseGen.setLevel(level);
 }
 
-void Radio::setCurrentFrequency (float frequency) {
+void Radio::setCurrentFrequency(float frequency) {
     burstGen.setCurrentFrequency(frequency);
 }
 
-void Radio::setTriangleDepth (float depth) {
+void Radio::setTriangleDepth(float depth) {
     triangleDepth = std::clamp(depth, 0.0f, 1.0f);
 }
 
-void Radio::setBpm (float newBpm) {
+void Radio::setBpm(float newBpm) {
     bpm = std::max(newBpm, 1.0f);
 }
 
-void Radio::setTempoSyncHold (bool enabled) {
+void Radio::setTempoSyncHold(bool enabled) {
     if (tempoSyncHold == enabled) return;
-    tempoSyncHold    = enabled;
+    tempoSyncHold = enabled;
     tempoHoldCounter = holdIntervalSamples();
 }
 
-void Radio::setTempoSyncGate (bool enabled) {
+void Radio::setTempoSyncGate(bool enabled) {
     if (tempoSyncGate == enabled) return;
     tempoSyncGate = enabled;
-    gateCounter   = gateIntervalSamples();
+    gateCounter = gateIntervalSamples();
 }
 
-void Radio::setHoldNoteDivision (NoteDivision div) {
+void Radio::setHoldNoteDivision(NoteDivision div) {
     if (holdDivision == div && holdCustomMs == 0.0f) return;
-    holdDivision     = div;
-    holdCustomMs     = 0.0f;
+    holdDivision = div;
+    holdCustomMs = 0.0f;
     tempoHoldCounter = holdIntervalSamples();
 }
 
-void Radio::setGateNoteDivision (NoteDivision div) {
+void Radio::setGateNoteDivision(NoteDivision div) {
     if (gateDivision == div && gateCustomMs == 0.0f) return;
     gateDivision = div;
     gateCustomMs = 0.0f;
-    gateCounter  = gateIntervalSamples();
+    gateCounter = gateIntervalSamples();
 }
 
-void Radio::setHoldCustomTimeMs (float ms) {
+void Radio::setHoldCustomTimeMs(float ms) {
     ms = std::max(ms, 1.0f);
     if (holdCustomMs == ms) return;
-    holdCustomMs     = ms;
+    holdCustomMs = ms;
     tempoHoldCounter = holdIntervalSamples();
 }
 
-void Radio::setGateCustomTimeMs (float ms) {
+void Radio::setGateCustomTimeMs(float ms) {
     ms = std::max(ms, 1.0f);
     if (gateCustomMs == ms) return;
     gateCustomMs = ms;
-    gateCounter  = gateIntervalSamples();
+    gateCounter = gateIntervalSamples();
 }
 
 int Radio::holdIntervalSamples() const {
@@ -112,76 +111,68 @@ int Radio::gateIntervalSamples() const {
     return noteDivisionToSamples(gateDivision);
 }
 
-int Radio::noteDivisionToSamples (NoteDivision div) const
-{
+int Radio::noteDivisionToSamples(NoteDivision div) const {
     double beatSeconds = 60.0 / bpm;
     double noteSeconds;
-    switch (div)
-    {
-        case NoteDivision::Whole:      noteSeconds = beatSeconds * 4.0;  break;
-        case NoteDivision::Half:       noteSeconds = beatSeconds * 2.0;  break;
-        case NoteDivision::Quarter:    noteSeconds = beatSeconds;         break;
-        case NoteDivision::Eighth:     noteSeconds = beatSeconds * 0.5;  break;
-        case NoteDivision::Sixteenth:  noteSeconds = beatSeconds * 0.25; break;
-        default:                       noteSeconds = beatSeconds;         break;
+    switch (div) {
+        case NoteDivision::Whole: noteSeconds = beatSeconds * 4.0;
+            break;
+        case NoteDivision::Half: noteSeconds = beatSeconds * 2.0;
+            break;
+        case NoteDivision::Quarter: noteSeconds = beatSeconds;
+            break;
+        case NoteDivision::Eighth: noteSeconds = beatSeconds * 0.5;
+            break;
+        case NoteDivision::Sixteenth: noteSeconds = beatSeconds * 0.25;
+            break;
+        default: noteSeconds = beatSeconds;
+            break;
     }
     return std::max(1, static_cast<int>(sampleRate * noteSeconds));
 }
 
-void Radio::setEmphasis (float amount)      { preEmphasis.setAmount(amount); }
-void Radio::setMultipathMix (float mix)     { multipath.setMix(mix); }
-void Radio::setMultipathDelay (float ms)    { multipath.setBaseDelay(ms); }
-void Radio::setLimiterCeiling (float lin)   { limiter.setThreshold(lin); }
+
+void Radio::setLimiterCeiling(float lin) { limiter.setThreshold(lin); }
 
 // Periodically cuts the signal and replaces it with noise.
 // dropoutAmount controls how frequent and how long the dropouts are.
 // When gateOpen: pass signal through. When closed: emit noise.
 // When tempoSyncGate is true, both open and closed durations snap to
 // noteDivisionToSamples(gateDivision) with no random variation.
-float Radio::applyNoiseGate (float signal)
-{
-    if (--gateCounter <= 0)
-    {
+float Radio::applyNoiseGate(float signal) {
+    if (--gateCounter <= 0) {
         gateOpen = !gateOpen;
 
-        if (tempoSyncGate || gateCustomMs > 0.0f)
-        {
+        if (tempoSyncGate || gateCustomMs > 0.0f) {
             gateCounter = gateIntervalSamples();
-        }
-        else if (gateOpen)
-        {
+        } else if (gateOpen) {
             // Open duration: long gap between dropouts; shorter at higher dropoutAmount
-            int maxOpen = static_cast<int>(sampleRate * 2.0f);    // up to 2 s
-            int minOpen = static_cast<int>(sampleRate * 0.05f);   // 50 ms minimum
+            int maxOpen = static_cast<int>(sampleRate * 2.0f); // up to 2 s
+            int minOpen = static_cast<int>(sampleRate * 0.05f); // 50 ms minimum
             float openRange = float(maxOpen - minOpen);
             gateCounter = minOpen + static_cast<int>((1.0f - dropoutAmount) * openRange
-                          * gateRng.nextFloat());
-        }
-        else
-        {
+                                                     * gateRng.nextFloat());
+        } else {
             // Closed (noise) duration: longer at higher dropoutAmount; short burst at low
-            int maxClosed = static_cast<int>(sampleRate * 0.4f);  // up to 400 ms
+            int maxClosed = static_cast<int>(sampleRate * 0.4f); // up to 400 ms
             int minClosed = static_cast<int>(sampleRate * 0.01f); // 10 ms minimum
             float closedRange = float(maxClosed - minClosed);
             gateCounter = minClosed + static_cast<int>(dropoutAmount * closedRange
-                          * gateRng.nextFloat());
+                                                       * gateRng.nextFloat());
         }
     }
 
-    return gateOpen ? signal : noiseGen.process();
+    return gateOpen ? signal : signal * 0.05f + noiseGen.process();
 }
 
 // Triangle LFO: phase advances 0→1 per cycle.
 // ComplexLFO modulates the instantaneous rate around the base, making cycle lengths uneven.
 // When tempoSyncHold is true, a simple sample counter replaces the LFO; the hold toggles
 // on/off every noteDivisionToSamples(holdDivision) samples with no random modulation.
-void Radio::tickTriangleLFO()
-{
-    if (tempoSyncHold)
-    {
-        if (--tempoHoldCounter <= 0)
-        {
-            isHolding        = !isHolding && (holdAmount > 0.0f);
+void Radio::tickTriangleLFO() {
+    if (tempoSyncHold) {
+        if (--tempoHoldCounter <= 0) {
+            isHolding = !isHolding && (holdAmount > 0.0f);
             tempoHoldCounter = holdIntervalSamples();
         }
         return;
@@ -191,8 +182,8 @@ void Radio::tickTriangleLFO()
     // Interval knob controls speed while Chaos (triangleDepth) still controls
     // how much of each cycle the hold is active.
     float rate = (holdCustomMs > 0.0f)
-        ? 1000.0f / (2.0f * holdCustomMs)
-        : triangleRate;
+                     ? 1000.0f / (2.0f * holdCustomMs)
+                     : triangleRate;
 
     float mod = rateModulator.returnModulation();
     float effectiveRate = rate * (1.f + 1.0f * mod);
@@ -201,26 +192,25 @@ void Radio::tickTriangleLFO()
     trianglePhase += effectiveRate / static_cast<float>(sampleRate);
     if (trianglePhase >= 1.0f) trianglePhase -= 1.0f;
 
-    float tri = ((trianglePhase < 0.5f) ? trianglePhase * 2.0f
-                                        : (1.0f - trianglePhase) * 2.0f) * triangleDepth;
+    float tri = ((trianglePhase < 0.5f)
+                     ? trianglePhase * 2.0f
+                     : (1.0f - trianglePhase) * 2.0f) * triangleDepth;
 
     isHolding = (tri > 0.5f) && (holdAmount > 0.0f);
 }
 
 // Captures incoming audio into a 32-sample loopBuffer when passing through.
 // When isHolding, replays (loops) the captured bracket instead.
-float Radio::sampleHold (float input)
-{
+float Radio::sampleHold(float input) {
     // Detect rising edge: decide once per bracket whether this hold gets pitch-shifted
     if (isHolding && !prevHolding)
         holdIsPitched = gateRng.nextFloat() > 0.5f;
     prevHolding = isHolding;
 
-    if (!isHolding)
-    {
+    if (!isHolding) {
         loopBuffer[loopWritePos] = input;
         loopWritePos = (loopWritePos + 1) & 8191;
-        loopReadPos  = loopWritePos;
+        loopReadPos = loopWritePos;
         return input;
     }
 
@@ -230,13 +220,13 @@ float Radio::sampleHold (float input)
 }
 
 float Radio::processSample(float sample) {
-
     tickTriangleLFO();
 
-    float sig = preEmphasis.processSample(sample);
-    sig = burstGen.process(sig);
+    //Makes envelope smoother
+    float sig = burstGen.process(sample);
+    // if (holdCustomMs > 1.0f) {
     sig = sampleHold(sig);
-    sig = multipath.processSample(sig);
+    // }
     sig = formantShifter.processSample(sig);
     sig = limiter.processSample(sig);
     if (gateEnabled) sig = applyNoiseGate(sig);

@@ -11,60 +11,81 @@
 #include <atomic>
 
 //==============================================================================
-class AudioPluginAudioProcessor final : public juce::AudioProcessor
-{
+class AudioPluginAudioProcessor final : public juce::AudioProcessor {
 public:
     AudioPluginAudioProcessor();
+
     ~AudioPluginAudioProcessor() override;
 
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
+
     void releaseResources() override;
-    bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
-    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+
+    bool isBusesLayoutSupported(const BusesLayout &layouts) const override;
+
+    void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) override;
+
     using AudioProcessor::processBlock;
 
-    juce::AudioProcessorEditor* createEditor() override;
+    juce::AudioProcessorEditor *createEditor() override;
+
     bool hasEditor() const override;
 
     const juce::String getName() const override;
+
     bool acceptsMidi() const override;
+
     bool producesMidi() const override;
+
     bool isMidiEffect() const override;
+
     double getTailLengthSeconds() const override;
 
     int getNumPrograms() override;
-    int getCurrentProgram() override;
-    void setCurrentProgram (int index) override;
-    const juce::String getProgramName (int index) override;
-    void changeProgramName (int index, const juce::String& newName) override;
 
-    void getStateInformation (juce::MemoryBlock& destData) override;
-    void setStateInformation (const void* data, int sizeInBytes) override;
+    int getCurrentProgram() override;
+
+    void setCurrentProgram(int index) override;
+
+    const juce::String getProgramName(int index) override;
+
+    void changeProgramName(int index, const juce::String &newName) override;
+
+    void getStateInformation(juce::MemoryBlock &destData) override;
+
+    void setStateInformation(const void *data, int sizeInBytes) override;
 
     juce::AudioProcessorValueTreeState apvts;
+
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
 
     void setLicensed(bool value) { licensed.store(value); }
-    bool isLicensed() const      { return licensed.load(); }
+    bool isLicensed() const { return licensed.load(); }
 
     // Returns a gain scalar so that applying it to the post-tanh signal restores
     // the same RMS level as the pre-tanh signal had over the current block.
-    static float computeTanhLevelMatchGain (float preSumSq, float postSumSq);
+    static float computeTanhLevelMatchGain(float preSumSq, float postSumSq);
 
 private:
-    std::atomic<bool> licensed { false };
-    AudioFilePlayer        audioFilePlayer;
+    std::atomic<bool> licensed{false};
+    AudioFilePlayer audioFilePlayer;
 
-    BitCrusher             bitCrusher;
-    PitchModulator         pitchModulator;
-    ComplexLFO             complexLFO;
-    Radio                  radioEffect;
-    Chorus                 chorus;
+    BitCrusher bitCrusher;
+    PitchModulator pitchModulator;
+    ComplexLFO complexLFO;
+    Radio radioEffect;
+    Chorus chorus;
 
-    PitchModulator         wobblePitchL;
-    PitchModulator         wobblePitchR;
-    float                  wobblePitchPhase = 0.0f;
-    float                  wobbleVolPhase   = 0.0f;
+    //FM Effect
+    PreEmphasisFilter preEmphasis;
+    MultipathFilter multipath;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
+    PitchModulator wobblePitchL;
+    PitchModulator wobblePitchR;
+    float wobblePitchPhase = 0.0f;
+    float wobbleVolPhase = 0.0f;
+
+    int logSampleCounter = 0;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };

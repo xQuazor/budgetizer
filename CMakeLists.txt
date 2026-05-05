@@ -17,7 +17,7 @@ add_subdirectory(
 )
 
 juce_add_plugin(MyPlugin
-        COMPANY_NAME "YourName"
+        COMPANY_NAME "Daveys Audio"
         IS_SYNTH FALSE
         NEEDS_MIDI_INPUT FALSE
         NEEDS_MIDI_OUTPUT FALSE
@@ -27,7 +27,7 @@ juce_add_plugin(MyPlugin
         PLUGIN_MANUFACTURER_CODE Dgrz
         PLUGIN_CODE Dgin
         FORMATS VST3 Standalone
-        PRODUCT_NAME "MyPlugin"
+        PRODUCT_NAME "Budgetizer"
 )
 
 target_sources(MyPlugin PRIVATE
@@ -38,12 +38,10 @@ target_sources(MyPlugin PRIVATE
         Source/modulation/NoiseLFO.cpp
         Source/modulation/TriangleLFO.cpp
         Source/modulation/ComplexLFO.cpp
-        Source/bitcrusher/BitCrusher.cpp
         Source/chorus/chorus.cpp
         Source/pitch/PitchModulator.cpp
         Source/player/AudioFilePlayer.cpp
         Source/bitcrusher/BitCrusher.cpp
-        Source/chorus/chorus.cpp
         Source/noise/NoiseGenerator.cpp
         Source/radio/StationBurstGenerator.cpp
         Source/radio/Radio.cpp
@@ -58,10 +56,10 @@ target_sources(MyPlugin PRIVATE
 # Run: cd ui && npm run build  (before building the C++ project in release)
 file(GLOB_RECURSE UI_DIST_FILES "${CMAKE_SOURCE_DIR}/ui/dist/*")
 
-if(UI_DIST_FILES)
+if (UI_DIST_FILES)
     juce_add_binary_data(PluginUIData SOURCES ${UI_DIST_FILES})
     target_link_libraries(MyPlugin PRIVATE PluginUIData)
-endif()
+endif ()
 
 target_compile_definitions(MyPlugin PUBLIC
         JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1

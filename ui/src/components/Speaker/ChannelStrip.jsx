@@ -1,4 +1,4 @@
-export default function ChannelStrip({button, knob1, knob2}) {
+export default function ChannelStrip({button, knob1, knob2, triangleIcon = false}) {
     const containerBorderStyle = {
         position: "absolute",
         inset: 0,
@@ -28,6 +28,10 @@ export default function ChannelStrip({button, knob1, knob2}) {
             {button}
             <div className={knobContainerStyles}>
                 {knob1}
+                {/*<svg className={triangleIcon ? "" : "invisible"} width="8" height="4" viewBox="0 0 12 8" fill="white"*/}
+                {/*     xmlns="http://www.w3.org/2000/svg">*/}
+                {/*    <path d="M6 8L0 0H12L6 8Z"/>*/}
+                {/*</svg>*/}
                 {knob2}
             </div>
         </div>

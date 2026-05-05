@@ -1,5 +1,5 @@
 import {useState, useEffect, useRef} from "react";
-import {setParameter, onLicenseStatus} from "./bridge";
+import {setParameter, onLicenseStatus, onFullState} from "./bridge";
 import LicenseOverlay from "./components/LicenseOverlay.jsx";
 import Toolbar from "./components/Toolbar.jsx";
 import {PRESETS} from "./presets.js";
@@ -16,20 +16,22 @@ import Background from "@/components/Background.jsx";
 
 export default function App() {
     const containerRef = useRef(null);
+    const initialized = useRef(false);
 
-    const [licenseValid, setLicenseValid] = useState(false);
+    const [licenseValid, setLicenseValid] = useState(true);
 
     useEffect(() => {
         return onLicenseStatus((status) => setLicenseValid(status.valid));
     }, []);
 
     const [bypass, setBypass] = useState(false);
-    const [noise, setNoise] = useState(true);
+    const [widen, setWiden] = useState(false);
     const [smooth, setSmooth] = useState(false);
-    const [radio, setRadio] = useState(true);
+    const [radio, setRadio] = useState(false);
     const [sync, setSync] = useState(false);
+    const [gate, setGate] = useState(false);
 
-    const [externalAudio, setExternalAudio] = useState(false);
+    const [externalAudio, setExternalAudio] = useState(true);
 
     const [bitDepth, setBitDepth] = useState(8);
     const [rate, setRate] = useState(5);
@@ -49,63 +51,107 @@ export default function App() {
         setMix(p.mix);
         setInterval(p.interval ?? 2);
         setIntervalMs(p.intervalMs ?? 500);
+        setGate(p.gate ?? false);
     };
+
+    // Restore state from JUCE when editor reopens
+    useEffect(() => {
+        return onFullState((state) => {
+            if ('gate' in state) {
+                setGate(state.gate)
+            }
+            if ('bypass' in state) setBypass(!!state.bypass);
+            if ('widen' in state) setWiden(!!state.noise);
+            if ('smooth' in state) setSmooth(!!state.smooth);
+            if ('radio' in state) setRadio(!!state.radio);
+            if ('useAudioInput' in state) setExternalAudio(!!state.useAudioInput);
+            if ('bitDepth' in state) setBitDepth(state.bitDepth);
+            if ('sampleReductionRate' in state) setRate(state.sampleReductionRate);
+            if ('chaos' in state) setChaos(state.chaos);
+            if ('drive' in state) setDrive(state.drive);
+            if ('masterMix' in state) setMix(state.masterMix);
+            if ('sync' in state) {
+                const isSynced = !!state.sync;
+                setSync(isSynced);
+                if ('interval' in state) {
+                    if (isSynced) setInterval(state.interval);
+                    else setIntervalMs(state.interval);
+                }
+            }
+        });
+    }, []);
 
     // Bypass
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("bypass", bypass);
     }, [bypass]);
     useEffect(() => {
-        setParameter("noise", noise);
-    }, [noise]);
+        if (!initialized.current) return;
+        setParameter("widen", widen);
+    }, [widen]);
 
     // Master
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("masterMix", mix);
     }, [mix]);
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("drive", drive);
     }, [drive]);
 
     // Digitizer
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("sampleReductionRate", rate);
     }, [rate]);
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("bitDepth", bitDepth);
     }, [bitDepth]);
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("smooth", smooth);
     }, [smooth]);
 
     // Radio
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("radio", radio);
     }, [radio]);
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("chaos", chaos);
     }, [chaos]);
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("interval", sync ? interval : intervalMs);
     }, [sync, interval, intervalMs]);
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("sync", sync);
     }, [sync]);
     useEffect(() => {
-        const off = (sync && interval === 0) || (!sync && intervalMs === 0);
-        setParameter("gated", !off);
-    }, [sync, interval, intervalMs]);
+        if (!initialized.current) return;
+        setParameter("gated", gate);
+    }, [gate]);
 
     // External Input
     useEffect(() => {
+        if (!initialized.current) return;
         setParameter("useAudioInput", externalAudio);
     }, [externalAudio]);
+
+    // Mark as initialized — must be last so all above effects skip on first render
+    useEffect(() => {
+        initialized.current = true;
+    }, []);
 
     useEffect(() => {
         if (!containerRef.current || typeof window.__JUCE__ === "undefined") return;
         requestAnimationFrame(() => {
             const rect = containerRef.current.getBoundingClientRect();
-            console.log("rect", rect);
             window.__JUCE__.backend.emitEvent("resize", {
                 width: Math.round(rect.width),
                 height: Math.round(rect.height),
@@ -127,8 +173,8 @@ export default function App() {
                 onBypassToggle={() => setBypass((v) => !v)}
                 sync={sync}
                 onSyncToggle={() => setSync((v) => !v)}
-                radio={radio}
-                onRadioToggle={() => setRadio((v) => !v)}
+                gate={gate}
+                onGateToggle={() => setGate((v) => !v)}
             />
             <Speaker
                 className={`${licenseValid ? "" : "blur-xs"}`}
@@ -166,6 +212,7 @@ export default function App() {
                                 />}
                             />
                             <ChannelStrip
+                                triangleIcon={true}
                                 button={<ModeButton
                                     label="FM"
                                     value={radio}
@@ -213,8 +260,8 @@ export default function App() {
                                 button={
                                     <ModeButton
                                         label="Widen"
-                                        value={noise}
-                                        onClick={() => setNoise((v) => !v)}
+                                        value={widen}
+                                        onClick={() => setWiden((v) => !v)}
                                     />
                                 }
                                 knob1={

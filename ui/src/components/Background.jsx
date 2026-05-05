@@ -1,5 +1,5 @@
-import noiseTexture from "@/assets/noise.png";
-import studioBackground from "@/assets/Studio Background.jpg";
+import noiseTexture from "@/assets/noise.webp";
+import studioBackground from "@/assets/Studio Background.webp";
 
 export default function Background({className}) {
     return (

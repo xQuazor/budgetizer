@@ -24,9 +24,6 @@ public:
     void setNoiseLevel    (float level);   // noise amplitude during dropouts
     void setCurrentFrequency (float frequency);
     void setTriangleDepth    (float triangleDepth);
-    void setEmphasis         (float amount);   // 0 = flat, 1 = full FM pre-emphasis
-    void setMultipathMix     (float mix);      // 0-1, reflection strength
-    void setMultipathDelay   (float ms);       // 0.1-3.0 ms
     void setLimiterCeiling   (float linear);   // 0.1-1.0
 
     // Tempo sync
@@ -45,8 +42,6 @@ private:
 
     NoiseGenerator         noiseGen;
     StationBurstGenerator  burstGen;
-    PreEmphasisFilter      preEmphasis;
-    MultipathFilter        multipath;
     RadioLimiter           limiter;
 
     // Sample hold / looper (10-sample bracket)

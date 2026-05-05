@@ -4,6 +4,8 @@ const listeners = new Map();  // paramId -> Set<callback>
 let parameterState = {};
 const licenseListeners = new Set();
 let lastLicenseStatus = null;
+const fullStateListeners = new Set();
+let lastFullState = null;
 
 const isJUCE = typeof window.__JUCE__ !== 'undefined';
 
@@ -55,9 +57,11 @@ if (isJUCE) {
     // C++ → JS: full state on initial load
     window.__JUCE__.backend.addEventListener("fullState", (event) => {
         Object.assign(parameterState, event);
+        lastFullState = event;
         for (const [id, value] of Object.entries(event)) {
             notifyListeners(id, value);
         }
+        fullStateListeners.forEach(cb => cb(event));
     });
 
     // C++ → JS: license validation result
@@ -68,4 +72,10 @@ if (isJUCE) {
 
     // Signal to C++ that the UI is ready
     window.__JUCE__.backend.emitEvent("uiReady", {});
+}
+
+export function onFullState(callback) {
+    fullStateListeners.add(callback);
+    if (lastFullState !== null) callback(lastFullState);
+    return () => fullStateListeners.delete(callback);
 }

@@ -1,6 +1,6 @@
-import aluminiumTexture from "../../assets/aluminium_texture.jpg";
-import topLayerShading from "../../assets/Top Layer Shading.png";
-import middleLayerShading from "../../assets/Middle Layer Shading.png";
+import aluminiumTexture from "../../assets/aluminium_texture.webp";
+import topLayerShading from "../../assets/Top Layer Shading.webp";
+import middleLayerShading from "../../assets/Middle Layer Shading.webp";
 export const Body = ({ children }) => {
   return (
     <div

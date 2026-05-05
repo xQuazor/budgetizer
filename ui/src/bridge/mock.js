@@ -40,3 +40,7 @@ export function onLicenseStatus(callback) {
     licenseListeners.add(callback);
     return () => licenseListeners.delete(callback);
 }
+
+export function onFullState(_callback) {
+    return () => {};
+}

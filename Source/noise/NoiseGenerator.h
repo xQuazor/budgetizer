@@ -1,15 +1,15 @@
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
 
-class NoiseGenerator
-{
+class NoiseGenerator {
 public:
-    void prepare (double sampleRate);
-    void setLevel (float level);   // 0..1
+    void prepare(double sampleRate);
+
+    void setLevel(float level); // 0..1
     float process();
 
 private:
     juce::Random rng;
-    float noiseLevel  = 0.25f;
-    float brownAccum  = 0.0f;
+    float noiseLevel = 0.2f;
+    float brownAccum = 0.05f;
 };
