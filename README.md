@@ -1,5 +1,7 @@
 # 📻 Degrainator
 
+![BudgetizerDesign](BudgetizerDesign.jpg)
+
 **An audio effect plugin that creatively degrades audio quality**, simulating vintage radio, tape, and lo-fi aesthetics. Built with JUCE and React.
 
 > Transform clean audio into gritty, nostalgic, and experimental soundscapes with multi-stage degradation.
