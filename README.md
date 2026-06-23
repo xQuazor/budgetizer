@@ -101,7 +101,6 @@ Output
 ## 🔧 Build Instructions
 
 ### Requirements
-- **macOS** (currently configured for macOS builds)
 - **CMake 3.22+**
 - **C++20 compiler** (Clang/Apple Clang)
 - **JUCE** (pre-built at `/Users/dovis/Documents/JUCE`)
@@ -213,50 +212,6 @@ degrainator/
 - **drive**: 5–10×
 - **smooth**: OFF (for harsh aliasing artifacts)
 - **masterMix**: 1.0 (fully wet)
-
----
-
-## 🖼️ Screenshots
-
-*Placeholder for plugin interface screenshots. Add images here once UI is finalized.*
-
-```
-[Screenshot of plugin UI in DAW]
-[Screenshot showing parameter controls]
-[Screenshot showing radio emulation in action]
-```
-
----
-
-## 🔌 Plugin Formats
-
-- ✅ **VST3** — Compatible with most modern DAWs (Ableton Live 12+, Logic Pro, Studio One, etc.)
-- ✅ **Standalone** — Run as a native macOS application for audio file processing
-
----
-
-## ⚙️ Technical Notes
-
-### Sample Rate Handling
-- All DSP components are initialized with the host's sample rate in `prepareToPlay()`
-- BitCrusher handles fractional reduction factors with optional linear interpolation
-
-### Level Compensation
-- After tanh saturation distortion, an automatic RMS-matching gain is computed per block
-- This restores the perceived loudness of the dry signal before master mix blending
-
-### Radio Emulation
-- When `radio = ON`, a complete AM radio simulation runs:
-  1. Noise and drift modulate the tuner frequency
-  2. The sweep filter tracks this frequency (200 Hz – 5 kHz band)
-  3. Station bursts gate the signal with envelope effects
-  4. Final band limiter ensures frequency containment
-
-### Audio File Loading
-- Currently configured to load from `/Users/dovis/CLionProjects/degrainator/music`
-- Files are played back sequentially with stereo support
-
----
 
 ## 👨‍💻 Development
 
